@@ -22,95 +22,167 @@ document.addEventListener('DOMContentLoaded', () => {
         characters.forEach(char => {
             const charCard = document.createElement('div');
             charCard.className = 'character-card';
+            charCard.id = `char-${char.id}`;
             charCard.innerHTML = `
                 <h3 class="character-name">${char.name}</h3>
                 <div class="status-bar-container">
-                    <p class="status-label">체력: ${char.health} / ${MAX_HEALTH}</p>
+                    <p class="status-label">체력: <span class="health-val">${char.health}</span> / ${MAX_HEALTH}</p>
                     <div class="status-bar">
                         <div class="status-bar-inner health-bar" style="width: ${char.health}%;"></div>
                     </div>
                 </div>
                 <div class="status-bar-container">
-                    <p class="status-label">포만감: ${char.satiety} / ${MAX_SATIETY}</p>
+                    <p class="status-label">포만감: <span class="satiety-val">${char.satiety}</span> / ${MAX_SATIETY}</p>
                     <div class="status-bar">
                         <div class="status-bar-inner satiety-bar" style="width: ${char.satiety}%;"></div>
                     </div>
                 </div>
-                <p class="money-status">보유 원: ${char.money.toLocaleString()} / ${MAX_MONEY.toLocaleString()}</p>
+                <p class="money-status">보유 원: <span class="money-val">${char.money.toLocaleString()}</span> / ${MAX_MONEY.toLocaleString()}</p>
             `;
             characterGrid.appendChild(charCard);
         });
     }
 
-    // 이벤트 목록 (코드 스타일 메시지로 업데이트)
+    // 특정 캐릭터 카드에 애니메이션 효과 추가
+    function animateCharacter(charId, type) {
+        const card = document.getElementById(`char-${charId}`);
+        if (!card) return;
+        
+        card.classList.remove('pulse-gain', 'pulse-loss');
+        void card.offsetWidth; // 리플로우
+        card.classList.add(type === 'gain' ? 'pulse-gain' : 'pulse-loss');
+    }
+
+    // 캐릭터 정보 업데이트 (UI 부분 업데이트)
+    function updateCharacterUI(char) {
+        const card = document.getElementById(`char-${char.id}`);
+        if (!card) return;
+
+        const healthBar = card.querySelector('.health-bar');
+        const healthVal = card.querySelector('.health-val');
+        const satietyBar = card.querySelector('.satiety-bar');
+        const satietyVal = card.querySelector('.satiety-val');
+        const moneyVal = card.querySelector('.money-val');
+
+        healthBar.style.width = `${char.health}%`;
+        healthVal.textContent = char.health;
+        satietyBar.style.width = `${char.satiety}%`;
+        satietyVal.textContent = char.satiety;
+        moneyVal.textContent = char.money.toLocaleString();
+    }
+
     const events = [
         { 
             message: (c1, c2) => `{ try { "${c1.name}"님이 "${c2.name}"님에게 롤 듀오를 신청합니다. } catch (error) { "거절당했습니다." } }`,
+            result: (c1, c2, success) => success ? `결과: ${c1.name}, ${c2.name} 포만감 +5` : `결과: ${c1.name} 체력 -5 (실패)`,
             action: (c1, c2) => { 
                 const success = Math.random() > 0.5;
                 if (success) {
                     c1.satiety = Math.min(MAX_SATIETY, c1.satiety + 5);
                     c2.satiety = Math.min(MAX_SATIETY, c2.satiety + 5);
+                    animateCharacter(c1.id, 'gain');
+                    animateCharacter(c2.id, 'gain');
                 } else {
                     c1.health = Math.max(0, c1.health - 5);
+                    animateCharacter(c1.id, 'loss');
                 }
+                updateCharacterUI(c1);
+                updateCharacterUI(c2);
+                return success;
             }
         },
         {
             message: (c1, c2) => `{ console.log("${c1.name}"님이 "${c2.name}"님을 괴롭힙니다. 😂); }`,
+            result: (c1, c2) => `결과: ${c2.name} 체력 -15, ${c1.name} 포만감 +5`,
             action: (c1, c2) => { 
                 c2.health = Math.max(0, c2.health - 15); 
                 c1.satiety = Math.min(MAX_SATIETY, c1.satiety + 5);
+                animateCharacter(c2.id, 'loss');
+                animateCharacter(c1.id, 'gain');
+                updateCharacterUI(c1);
+                updateCharacterUI(c2);
             }
         },
         {
             message: (c1) => `{ if (snack.found()) { "${c1.name}".satiety += 20; console.log("Yummy!"); } }`,
-            action: (c1) => { c1.satiety = Math.min(MAX_SATIETY, c1.satiety + 20); }
+            result: (c1) => `결과: ${c1.name} 포만감 +20`,
+            action: (c1) => { 
+                c1.satiety = Math.min(MAX_SATIETY, c1.satiety + 20); 
+                animateCharacter(c1.id, 'gain');
+                updateCharacterUI(c1);
+            }
         },
         {
             message: (c1) => `{ wallet.add(10000); // "${c1.name}"님이 길에서 돈을 주웠습니다. }`,
-            action: (c1) => { c1.money = Math.min(MAX_MONEY, c1.money + 10000); }
+            result: (c1) => `결과: ${c1.name} 보유 원 +10,000`,
+            action: (c1) => { 
+                c1.money = Math.min(MAX_MONEY, c1.money + 10000); 
+                animateCharacter(c1.id, 'gain');
+                updateCharacterUI(c1);
+            }
         },
         {
             message: (c1, c2) => `{ "${c1.name}".steal("${c2.name}".snack); satiety_exchange(10); }`,
+            result: (c1, c2) => `결과: ${c1.name} 포만감 +10, ${c2.name} 포만감 -10`,
             action: (c1, c2) => {
                 c1.satiety = Math.min(MAX_SATIETY, c1.satiety + 10);
                 c2.satiety = Math.max(0, c2.satiety - 10);
+                animateCharacter(c1.id, 'gain');
+                animateCharacter(c2.id, 'loss');
+                updateCharacterUI(c1);
+                updateCharacterUI(c2);
             }
         },
         {
             message: (c1) => `{ "${c1.name}".work_out(); health += 10; satiety -= 5; }`,
+            result: (c1) => `결과: ${c1.name} 체력 +10, 포만감 -5`,
             action: (c1) => {
                 c1.health = Math.min(MAX_HEALTH, c1.health + 10);
                 c1.satiety = Math.max(0, c1.satiety - 5);
+                animateCharacter(c1.id, 'gain');
+                updateCharacterUI(c1);
             }
         },
         { 
             message: (c1, c2) => `{ "${c1.name}".give_gift("${c2.name}"); money -= 5000; satiety += 15; }`,
+            result: (c1, c2) => `결과: ${c2.name} 포만감 +15, ${c1.name} 보유 원 -5,000`,
             action: (c1, c2) => { 
                 c2.satiety = Math.min(MAX_SATIETY, c2.satiety + 15);
                 c1.money = Math.max(0, c1.money - 5000); 
+                animateCharacter(c2.id, 'gain');
+                animateCharacter(c1.id, 'loss');
+                updateCharacterUI(c1);
+                updateCharacterUI(c2);
             }
         },
         { 
             message: (c1, c2) => `{ "${c1.name}".cheer_up("${c2.name}"); health += 20; }`,
+            result: (c1, c2) => `결과: ${c2.name} 체력 +20`,
             action: (c1, c2) => { 
                 c2.health = Math.min(MAX_HEALTH, c2.health + 20);
+                animateCharacter(c2.id, 'gain');
+                updateCharacterUI(c2);
             }
         }
     ];
 
-    // 코딩 버튼 이벤트
-    codeButton.addEventListener('click', () => {
-        // 3, 4, 5개 중 랜덤으로 결과 개수 결정
-        const resultCount = Math.floor(Math.random() * 3) + 3;
-        let outputHTML = '';
+    let isProcessing = false;
 
-        for (let i = 0; i < resultCount; i++) {
+    async function processCoding() {
+        if (isProcessing) return;
+        isProcessing = true;
+        codeButton.disabled = true;
+
+        codeOutput.innerHTML = `<div class="code-line comment">// 시나모롤의 코딩 스타트...</div>`;
+        
+        const resultCount = Math.floor(Math.random() * 3) + 3;
+
+        for (let i = 1; i <= resultCount; i++) {
+            await new Promise(resolve => setTimeout(resolve, 800)); // 지연 시간
+            
             const eventIndex = Math.floor(Math.random() * events.length);
             const event = events[eventIndex];
             
-            // 랜덤 캐릭터 선택
             const char1Index = Math.floor(Math.random() * characters.length);
             let char2Index = Math.floor(Math.random() * characters.length);
             while (char1Index === char2Index) {
@@ -120,20 +192,45 @@ document.addEventListener('DOMContentLoaded', () => {
             const char1 = characters[char1Index];
             const char2 = characters[char2Index];
 
-            // 액션 실행 및 메시지 생성
-            event.action(char1, char2);
-            outputHTML += `<div class="code-line">> ${event.message(char1, char2)}</div>`;
+            // 1. 상황 메시지 출력
+            const situationDiv = document.createElement('div');
+            situationDiv.className = 'code-line comment';
+            situationDiv.textContent = `// ${i}번째 상황`;
+            codeOutput.appendChild(situationDiv);
+            
+            const codeDiv = document.createElement('div');
+            codeDiv.className = 'code-line';
+            codeDiv.textContent = `> ${event.message(char1, char2)}`;
+            codeOutput.appendChild(codeDiv);
+
+            // 스크롤 자동 이동
+            codeOutput.scrollTop = codeOutput.scrollHeight;
+
+            await new Promise(resolve => setTimeout(resolve, 600));
+
+            // 2. 액션 실행 및 결과 출력
+            const success = event.action(char1, char2);
+            
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'code-line result';
+            resultDiv.textContent = `  ${event.result(char1, char2, success)}`;
+            codeOutput.appendChild(resultDiv);
+
+            // 스크롤 자동 이동
+            codeOutput.scrollTop = codeOutput.scrollHeight;
         }
 
-        codeOutput.innerHTML = outputHTML;
-        
-        // 애니메이션 효과를 위해 클래스 추가/제거
-        codeOutput.classList.remove('typing');
-        void codeOutput.offsetWidth; // 리플로우 강제
-        codeOutput.classList.add('typing');
+        const endDiv = document.createElement('div');
+        endDiv.className = 'code-line comment';
+        endDiv.textContent = `// 코딩 종료! ✨`;
+        codeOutput.appendChild(endDiv);
+        codeOutput.scrollTop = codeOutput.scrollHeight;
 
-        renderCharacters();
-    });
+        isProcessing = false;
+        codeButton.disabled = false;
+    }
+
+    codeButton.addEventListener('click', processCoding);
 
     // 초기 렌더링
     renderCharacters();

@@ -1,24 +1,26 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const characters = [
-        { id: 1, name: '심우성', health: 70, satiety: 70, money: 0 },
-        { id: 2, name: '채의진', health: 70, satiety: 70, money: 0 },
-        { id: 3, name: '조윤혜', health: 70, satiety: 70, money: 0 },
-        { id: 4, name: '조대환', health: 70, satiety: 70, money: 0 },
-        { id: 5, name: '최준', health: 70, satiety: 70, money: 0 },
-        { id: 6, name: '전유희', health: 70, satiety: 70, money: 0 },
+    let characters = [
+        { id: 1, name: '심우성', health: 60, satiety: 60, money: 1000 },
+        { id: 2, name: '채의진', health: 60, satiety: 60, money: 1000 },
+        { id: 3, name: '조윤혜', health: 60, satiety: 60, money: 1000 },
+        { id: 4, name: '조대환', health: 60, satiety: 60, money: 1000 },
+        { id: 5, name: '최준', health: 60, satiety: 60, money: 1000 },
+        { id: 6, name: '전유희', health: 60, satiety: 60, money: 1000 },
     ];
 
     const MAX_HEALTH = 100;
     const MAX_SATIETY = 100;
-    const MAX_MONEY = 1000000;
 
-    // 사운드 효과 설정
+    // 사운드 효과 설정 (볼륨 낮춤 및 귀여운 소리로 변경)
     const sounds = {
-        click: new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'), // 뾰로롱/팝
-        typing: new Audio('https://assets.mixkit.co/active_storage/sfx/1583/1583-preview.mp3'), // 키보드
-        gain: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'),  // 긍정
-        loss: new Audio('https://assets.mixkit.co/active_storage/sfx/2014/2014-preview.mp3')   // 부정
+        click: new Audio('https://assets.mixkit.co/active_storage/sfx/2525/2525-preview.mp3'), // 부드러운 팝
+        typing: new Audio('https://assets.mixkit.co/active_storage/sfx/1583/1583-preview.mp3'), 
+        gain: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'),
+        loss: new Audio('https://assets.mixkit.co/active_storage/sfx/2014/2014-preview.mp3')
     };
+    
+    // 전체 볼륨 조절
+    Object.values(sounds).forEach(s => s.volume = 0.2);
 
     const characterGrid = document.getElementById('character-grid');
     const codeOutput = document.getElementById('code-output');
@@ -26,10 +28,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getStatusIcons(char) {
         let icons = '';
+        if (char.health <= 0) return '👻';
         if (char.health < 20) icons += '💀';
         else if (char.health < 50) icons += '💦';
         
-        if (char.satiety < 30) icons += '🍕?';
+        if (char.satiety >= 100) icons += '🥰';
+        else if (char.satiety < 20) icons += '🍕?';
         return icons;
     }
 
@@ -38,7 +42,11 @@ document.addEventListener('DOMContentLoaded', () => {
         characterGrid.innerHTML = '';
         characters.forEach(char => {
             const charCard = document.createElement('div');
-            charCard.className = `character-card ${char.money >= 10000 ? 'wealthy-glow' : ''}`;
+            // 체력 0이면 exhausted 클래스 추가
+            const statusClass = char.health <= 0 ? 'exhausted' : '';
+            const wealthyClass = char.money >= 10000 ? 'wealthy-glow' : '';
+            
+            charCard.className = `character-card ${wealthyClass} ${statusClass}`;
             charCard.id = `char-${char.id}`;
             charCard.innerHTML = `
                 <div class="card-header">
@@ -57,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="status-bar-inner satiety-bar" style="width: ${char.satiety}%;"></div>
                     </div>
                 </div>
-                <p class="money-status">보유 원: <span class="money-val">${char.money.toLocaleString()}</span> / ${MAX_MONEY.toLocaleString()}</p>
+                <p class="money-status">보유 원: <span class="money-val">${char.money.toLocaleString()}</span></p>
             `;
             characterGrid.appendChild(charCard);
         });
@@ -66,12 +74,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function animateCharacter(charId, type) {
         const card = document.getElementById(`char-${charId}`);
         if (!card) return;
-        
         card.classList.remove('pulse-gain', 'pulse-loss');
         void card.offsetWidth; 
         card.classList.add(type === 'gain' ? 'pulse-gain' : 'pulse-loss');
-        
-        // 사운드 재생
         if (type === 'gain') sounds.gain.play().catch(e => {});
         else sounds.loss.play().catch(e => {});
     }
@@ -92,109 +97,87 @@ document.addEventListener('DOMContentLoaded', () => {
         satietyBar.style.width = `${char.satiety}%`;
         satietyVal.textContent = char.satiety;
         moneyVal.textContent = char.money.toLocaleString();
-        
-        // 아이콘 업데이트
         statusIcon.textContent = getStatusIcons(char);
         
-        // 부자 효과 업데이트
-        if (char.money >= 10000) {
-            card.classList.add('wealthy-glow');
-        } else {
-            card.classList.remove('wealthy-glow');
-        }
+        // 상태 클래스 업데이트
+        if (char.health <= 0) card.classList.add('exhausted');
+        else card.classList.remove('exhausted');
+
+        if (char.money >= 10000) card.classList.add('wealthy-glow');
+        else card.classList.remove('wealthy-glow');
     }
 
     const events = [
+        // 체력 관련
         { 
-            message: (c1, c2) => `{ try { "${c1.name}"님이 "${c2.name}"님에게 롤 듀오를 신청합니다. } catch (error) { "거절당했습니다." } }`,
-            result: (c1, c2, success) => success ? `결과: ${c1.name}, ${c2.name} 포만감 +5` : `결과: ${c1.name} 체력 -5 (실패)`,
-            action: (c1, c2) => { 
-                const success = Math.random() > 0.5;
-                if (success) {
-                    c1.satiety = Math.min(MAX_SATIETY, c1.satiety + 5);
-                    c2.satiety = Math.min(MAX_SATIETY, c2.satiety + 5);
-                    animateCharacter(c1.id, 'gain');
-                    animateCharacter(c2.id, 'gain');
-                } else {
-                    c1.health = Math.max(0, c1.health - 5);
-                    animateCharacter(c1.id, 'loss');
-                }
-                updateCharacterUI(c1);
-                updateCharacterUI(c2);
-                return success;
-            }
+            code: (c1) => `시나모롤.선물하기("${c1.name}", "비타민");`,
+            desc: (c1) => `👉 ${c1.name}님이 시나모롤에게 비타민을 선물받아 체력이 15 증가합니다!`,
+            action: (c1) => { c1.health = Math.min(MAX_HEALTH, c1.health + 15); animateCharacter(c1.id, 'gain'); updateCharacterUI(c1); }
         },
         {
-            message: (c1, c2) => `{ console.log("${c1.name}"님이 "${c2.name}"님을 괴롭힙니다. 😂); }`,
-            result: (c1, c2) => `결과: ${c2.name} 체력 -15, ${c1.name} 포만감 +5`,
-            action: (c1, c2) => { 
-                c2.health = Math.max(0, c2.health - 15); 
-                c1.satiety = Math.min(MAX_SATIETY, c1.satiety + 5);
-                animateCharacter(c2.id, 'loss');
-                animateCharacter(c1.id, 'gain');
-                updateCharacterUI(c1);
-                updateCharacterUI(c2);
-            }
+            code: (c1) => `await ${c1.name}.수면(8_시간);`,
+            desc: (c1) => `👉 ${c1.name}님이 꿀잠을 자고 일어나 체력이 30이나 회복되었습니다! 💤`,
+            action: (c1) => { c1.health = Math.min(MAX_HEALTH, c1.health + 30); animateCharacter(c1.id, 'gain'); updateCharacterUI(c1); }
         },
         {
-            message: (c1) => `{ if (snack.found()) { "${c1.name}".satiety += 20; console.log("Yummy!"); } }`,
-            result: (c1) => `결과: ${c1.name} 포만감 +20`,
-            action: (c1) => { 
-                c1.satiety = Math.min(MAX_SATIETY, c1.satiety + 20); 
-                animateCharacter(c1.id, 'gain');
-                updateCharacterUI(c1);
-            }
+            code: (c1) => `try { ${c1.name}.업무(); } catch (피곤) { }`,
+            desc: (c1) => `👉 ${c1.name}님에게 갑작스러운 야근이 발생했습니다... 체력이 20 감소합니다. 😫`,
+            action: (c1) => { c1.health = Math.max(0, c1.health - 20); animateCharacter(c1.id, 'loss'); updateCharacterUI(c1); }
         },
         {
-            message: (c1) => `{ wallet.add(10000); // "${c1.name}"님이 길에서 돈을 주웠습니다. }`,
-            result: (c1) => `결과: ${c1.name} 보유 원 +10,000`,
-            action: (c1) => { 
-                c1.money = Math.min(MAX_MONEY, c1.money + 10000); 
-                animateCharacter(c1.id, 'gain');
-                updateCharacterUI(c1);
-            }
+            code: (c1) => `보내기("${c1.name}", "할 수 있어! ✨");`,
+            desc: (c1) => `👉 따뜻한 응원 메시지가 도착했습니다! ${c1.name}님의 체력이 10 증가합니다.`,
+            action: (c1) => { c1.health = Math.min(MAX_HEALTH, c1.health + 10); animateCharacter(c1.id, 'gain'); updateCharacterUI(c1); }
+        },
+        // 포만감 관련
+        {
+            code: (c1) => `if (맛집.발견()) { ${c1.name}.먹방(); }`,
+            desc: (c1) => `👉 ${c1.name}님이 숨겨진 맛집을 발견했습니다! 포만감이 25 증가합니다. 🍔`,
+            action: (c1) => { c1.satiety = Math.min(MAX_SATIETY, c1.satiety + 25); animateCharacter(c1.id, 'gain'); updateCharacterUI(c1); }
         },
         {
-            message: (c1, c2) => `{ "${c1.name}".steal("${c2.name}".snack); satiety_exchange(10); }`,
-            result: (c1, c2) => `결과: ${c1.name} 포만감 +10, ${c2.name} 포만감 -10`,
+            code: (c1) => `for (음식 in 편의점) { ${c1.name}.흡입(); }`,
+            desc: (c1) => `👉 배고픈 ${c1.name}님이 편의점을 털었습니다! 포만감이 15 증가합니다.`,
+            action: (c1) => { c1.satiety = Math.min(MAX_SATIETY, c1.satiety + 15); animateCharacter(c1.id, 'gain'); updateCharacterUI(c1); }
+        },
+        {
+            code: (c1, c2) => `${c1.name}.한입뺏어먹기(from: "${c2.name}");`,
+            desc: (c1, c2) => `👉 ${c1.name}님이 ${c2.name}님의 간식을 한입 뺏어먹었습니다! 😲`,
             action: (c1, c2) => {
                 c1.satiety = Math.min(MAX_SATIETY, c1.satiety + 10);
                 c2.satiety = Math.max(0, c2.satiety - 10);
-                animateCharacter(c1.id, 'gain');
-                animateCharacter(c2.id, 'loss');
-                updateCharacterUI(c1);
-                updateCharacterUI(c2);
+                animateCharacter(c1.id, 'gain'); animateCharacter(c2.id, 'loss');
+                updateCharacterUI(c1); updateCharacterUI(c2);
             }
         },
         {
-            message: (c1) => `{ "${c1.name}".work_out(); health += 10; satiety -= 5; }`,
-            result: (c1) => `결과: ${c1.name} 체력 +10, 포만감 -5`,
-            action: (c1) => {
+            code: (c1) => `window.alert("배달이 취소되었습니다. 😭");`,
+            desc: (c1) => `👉 ${c1.name}님의 배달이 갑자기 취소되었습니다... 포만감이 5 감소합니다.`,
+            action: (c1) => { c1.satiety = Math.max(0, c1.satiety - 5); animateCharacter(c1.id, 'loss'); updateCharacterUI(c1); }
+        },
+        // 재산 관련
+        {
+            code: (c1) => `계좌.입금("${c1.name}", 50000); // 보너스`,
+            desc: (c1) => `👉 와우! ${c1.name}님에게 특별 보너스 50,000원이 입금되었습니다! 💰`,
+            action: (c1) => { c1.money += 50000; animateCharacter(c1.id, 'gain'); updateCharacterUI(c1); }
+        },
+        {
+            code: (c1) => `${c1.name}.지갑.상태 = "텅텅";`,
+            desc: (c1) => `👉 아차! ${c1.name}님이 지갑을 분실했습니다. 10,000원을 잃어버렸습니다. 💸`,
+            action: (c1) => { c1.money = Math.max(0, c1.money - 10000); animateCharacter(c1.id, 'loss'); updateCharacterUI(c1); }
+        },
+        {
+            code: (c1) => `${c1.name}.주식.수익률 = 200;`,
+            desc: (c1) => `👉 ${c1.name}님이 투자한 주식이 떡상했습니다! 30,000원의 수익이 발생합니다. 📈`,
+            action: (c1) => { c1.money += 30000; animateCharacter(c1.id, 'gain'); updateCharacterUI(c1); }
+        },
+        {
+            code: (c1) => `${c1.name}.쇼핑("명품"); // 기분최고`,
+            desc: (c1) => `👉 ${c1.name}님이 플렉스를 즐깁니다! 재산은 줄었지만 기분이 좋아 체력이 10 오릅니다.`,
+            action: (c1) => { 
+                c1.money = Math.max(0, c1.money - 40000); 
                 c1.health = Math.min(MAX_HEALTH, c1.health + 10);
-                c1.satiety = Math.max(0, c1.satiety - 5);
-                animateCharacter(c1.id, 'gain');
-                updateCharacterUI(c1);
-            }
-        },
-        { 
-            message: (c1, c2) => `{ "${c1.name}".give_gift("${c2.name}"); money -= 5000; satiety += 15; }`,
-            result: (c1, c2) => `결과: ${c2.name} 포만감 +15, ${c1.name} 보유 원 -5,000`,
-            action: (c1, c2) => { 
-                c2.satiety = Math.min(MAX_SATIETY, c2.satiety + 15);
-                c1.money = Math.max(0, c1.money - 5000); 
-                animateCharacter(c2.id, 'gain');
-                animateCharacter(c1.id, 'loss');
-                updateCharacterUI(c1);
-                updateCharacterUI(c2);
-            }
-        },
-        { 
-            message: (c1, c2) => `{ "${c1.name}".cheer_up("${c2.name}"); health += 20; }`,
-            result: (c1, c2) => `결과: ${c2.name} 체력 +20`,
-            action: (c1, c2) => { 
-                c2.health = Math.min(MAX_HEALTH, c2.health + 20);
-                animateCharacter(c2.id, 'gain');
-                updateCharacterUI(c2);
+                animateCharacter(c1.id, 'loss'); updateCharacterUI(c1); 
             }
         }
     ];
@@ -206,51 +189,110 @@ document.addEventListener('DOMContentLoaded', () => {
         isProcessing = true;
         codeButton.disabled = true;
 
-        // 시작 사운드
         sounds.click.play().catch(e => {});
-
         codeOutput.innerHTML = `<div class="code-line comment">// 시나모롤의 코딩 스타트...</div>`;
         
+        // 1% 확률로 서버 대폭발
+        if (Math.random() < 0.01) {
+            await new Promise(r => setTimeout(r, 800));
+            const crashCode = document.createElement('div');
+            crashCode.className = 'code-line error';
+            crashCode.textContent = `> { system.reboot(); all_characters.reset(); }`;
+            codeOutput.appendChild(crashCode);
+            
+            const crashDesc = document.createElement('div');
+            crashDesc.className = 'code-line';
+            crashDesc.textContent = `🚨 서버 대폭발!! 모든 수치가 초기화됩니다!`;
+            codeOutput.appendChild(crashDesc);
+            
+            characters.forEach(c => {
+                c.health = 60; c.satiety = 60; c.money = 1000;
+                updateCharacterUI(c);
+            });
+            isProcessing = false;
+            codeButton.disabled = false;
+            return;
+        }
+
         const resultCount = Math.floor(Math.random() * 3) + 3;
 
         for (let i = 1; i <= resultCount; i++) {
             await new Promise(resolve => setTimeout(resolve, 800)); 
-            
-            const eventIndex = Math.floor(Math.random() * events.length);
-            const event = events[eventIndex];
-            
-            const char1Index = Math.floor(Math.random() * characters.length);
-            let char2Index = Math.floor(Math.random() * characters.length);
-            while (char1Index === char2Index) {
-                char2Index = Math.floor(Math.random() * characters.length);
-            }
-            
-            const char1 = characters[char1Index];
-            const char2 = characters[char2Index];
-
-            // 타이핑 사운드
             sounds.typing.play().catch(e => {});
 
-            const situationDiv = document.createElement('div');
-            situationDiv.className = 'code-line comment';
-            situationDiv.textContent = `// ${i}번째 상황`;
-            codeOutput.appendChild(situationDiv);
-            
-            const codeDiv = document.createElement('div');
-            codeDiv.className = 'code-line';
-            codeDiv.textContent = `> ${event.message(char1, char2)}`;
-            codeOutput.appendChild(codeDiv);
+            // 조대환 이스터 에그 (15% 확률)
+            if (Math.random() < 0.15) {
+                const easterEgg = document.createElement('div');
+                easterEgg.className = 'code-line comment';
+                easterEgg.textContent = `// 미래에 100억을 벌 사나이, 조대환이 지나갑니다... 💎`;
+                codeOutput.appendChild(easterEgg);
+            }
 
-            codeOutput.scrollTop = codeOutput.scrollHeight;
+            const char1 = characters[Math.floor(Math.random() * characters.length)];
+            let char2 = characters[Math.floor(Math.random() * characters.length)];
+            while (char1 === char2) char2 = characters[Math.floor(Math.random() * characters.length)];
 
-            await new Promise(resolve => setTimeout(resolve, 600));
+            // 롤 듀오 신청 특수 연출 (20% 확률로 발생시키거나 기존 이벤트를 대체)
+            if (Math.random() < 0.25) {
+                const duoReqCode = document.createElement('div');
+                duoReqCode.className = 'code-line';
+                duoReqCode.textContent = `> ${char1.name}.requestDuo("${char2.name}");`;
+                codeOutput.appendChild(duoReqCode);
+                
+                const duoReqDesc = document.createElement('div');
+                duoReqDesc.className = 'code-line comment';
+                duoReqDesc.textContent = `// ${char1.name}님이 듀오 신청 중...`;
+                codeOutput.appendChild(duoReqDesc);
+                codeOutput.scrollTop = codeOutput.scrollHeight;
 
-            const success = event.action(char1, char2);
-            
-            const resultDiv = document.createElement('div');
-            resultDiv.className = 'code-line result';
-            resultDiv.textContent = `  ${event.result(char1, char2, success)}`;
-            codeOutput.appendChild(resultDiv);
+                await new Promise(r => setTimeout(r, 1000)); // 1초 대기
+
+                const success = Math.random() > 0.5;
+                const duoResCode = document.createElement('div');
+                duoResCode.className = 'code-line';
+                duoResCode.textContent = success ? `> success! 함께 협곡으로 떠납니다. 🎮` : `> catch: 거절당했습니다.. ㅠㅠ`;
+                codeOutput.appendChild(duoResCode);
+
+                if (success) {
+                    char1.health = Math.min(MAX_HEALTH, char1.health + 10);
+                    char2.health = Math.min(MAX_HEALTH, char2.health + 10);
+                    animateCharacter(char1.id, 'gain'); animateCharacter(char2.id, 'gain');
+                } else {
+                    char1.health = Math.max(0, char1.health - 10);
+                    animateCharacter(char1.id, 'loss');
+                }
+                updateCharacterUI(char1); updateCharacterUI(char2);
+            } else {
+                // 일반 이벤트
+                const event = events[Math.floor(Math.random() * events.length)];
+                
+                const codeDiv = document.createElement('div');
+                codeDiv.className = 'code-line';
+                codeDiv.textContent = `> ${event.code(char1, char2)}`;
+                codeOutput.appendChild(codeDiv);
+
+                await new Promise(r => setTimeout(r, 400));
+                
+                const descDiv = document.createElement('div');
+                descDiv.className = 'code-line result-text';
+                descDiv.textContent = event.desc(char1, char2);
+                codeOutput.appendChild(descDiv);
+
+                event.action(char1, char2);
+            }
+
+            // 상태 메시지 체크
+            if (char1.health <= 0) {
+                const errDiv = document.createElement('div');
+                errDiv.className = 'code-line error';
+                errDiv.textContent = `❌ 컴파일 에러: ${char1.name}님이 지쳤습니다.`;
+                codeOutput.appendChild(errDiv);
+            } else if (char1.satiety >= 100) {
+                const happyDiv = document.createElement('div');
+                happyDiv.className = 'code-line success';
+                happyDiv.textContent = `✨ ${char1.name}님이 배불러서 매우 행복해합니다!`;
+                codeOutput.appendChild(happyDiv);
+            }
 
             codeOutput.scrollTop = codeOutput.scrollHeight;
         }
@@ -266,6 +308,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     codeButton.addEventListener('click', processCoding);
-
     renderCharacters();
 });

@@ -74,7 +74,7 @@ header::before { content: '☁️'; font-size: 2em; position: absolute; top: 10p
     padding: 20px;
     border-radius: 20px;
     text-align: left;
-    height: 300px; /* 약간 더 높임 */
+    height: 300px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 14px;
     line-height: 1.6;
@@ -97,7 +97,7 @@ header::before { content: '☁️'; font-size: 2em; position: absolute; top: 10p
 }
 
 .code-line.result-text {
-    color: #2b6cb0; /* 설명 텍스트 색상 */
+    color: #2b6cb0;
     font-weight: 700;
     padding-left: 15px;
     margin-bottom: 12px;
@@ -182,7 +182,6 @@ h2 {
     transform: translateY(-5px);
 }
 
-/* 게임 오버 상태 */
 .character-card.exhausted {
     opacity: 0.5;
     filter: grayscale(40%);
@@ -206,28 +205,31 @@ h2 {
     top: -5px;
 }
 
-/* 부자 효과 (Glow) */
+/* 부자 효과 (강화된 Glow) */
 @keyframes wealthy-animation {
-    0% { border-color: #ffd700; box-shadow: 0 0 5px #ffd700; }
-    50% { border-color: #ff8c00; box-shadow: 0 0 20px #ff8c00; }
-    100% { border-color: #ffd700; box-shadow: 0 0 5px #ffd700; }
+    0% { border-color: #ffd700; box-shadow: 0 0 10px #ffd700, 0 0 5px #fff; transform: scale(1); }
+    25% { border-color: #ff4500; box-shadow: 0 0 30px #ff4500, 0 0 10px #ff0; transform: scale(1.02); }
+    50% { border-color: #ffd700; box-shadow: 0 0 50px #ffd700, 0 0 20px #fff; transform: scale(1.04); }
+    75% { border-color: #ff8c00; box-shadow: 0 0 30px #ff8c00, 0 0 10px #ff0; transform: scale(1.02); }
+    100% { border-color: #ffd700; box-shadow: 0 0 10px #ffd700, 0 0 5px #fff; transform: scale(1); }
 }
 
 .wealthy-glow {
-    animation: wealthy-animation 2s infinite;
-    background: linear-gradient(145deg, #ffffff, #fffdf0);
+    animation: wealthy-animation 1s infinite;
+    background: linear-gradient(135deg, #ffffff 0%, #fff9c4 100%);
+    z-index: 10;
 }
 
 /* 애니메이션 효과 */
 @keyframes pulse-gain {
     0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.7); }
-    70% { transform: scale(1.03); box-shadow: 0 0 0 15px rgba(72, 187, 120, 0); }
+    70% { transform: scale(1.03); box-shadow: 0 0 0 20px rgba(72, 187, 120, 0); }
     100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(72, 187, 120, 0); }
 }
 
 @keyframes pulse-loss {
     0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 101, 101, 0.7); }
-    70% { transform: scale(0.97); box-shadow: 0 0 0 15px rgba(245, 101, 101, 0); }
+    70% { transform: scale(0.97); box-shadow: 0 0 0 20px rgba(245, 101, 101, 0); }
     100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 101, 101, 0); }
 }
 

@@ -11,15 +11,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const MAX_HEALTH = 100;
     const MAX_SATIETY = 100;
 
-    // 사운드 효과 설정 (볼륨 낮춤 및 귀여운 소리로 변경)
     const sounds = {
-        click: new Audio('https://assets.mixkit.co/active_storage/sfx/2525/2525-preview.mp3'), // 부드러운 팝
         typing: new Audio('https://assets.mixkit.co/active_storage/sfx/1583/1583-preview.mp3'), 
         gain: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'),
         loss: new Audio('https://assets.mixkit.co/active_storage/sfx/2014/2014-preview.mp3')
     };
     
-    // 전체 볼륨 조절
     Object.values(sounds).forEach(s => s.volume = 0.2);
 
     const characterGrid = document.getElementById('character-grid');
@@ -37,12 +34,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return icons;
     }
 
-    // 캐릭터 UI 렌더링 함수
     function renderCharacters() {
         characterGrid.innerHTML = '';
         characters.forEach(char => {
             const charCard = document.createElement('div');
-            // 체력 0이면 exhausted 클래스 추가
             const statusClass = char.health <= 0 ? 'exhausted' : '';
             const wealthyClass = char.money >= 10000 ? 'wealthy-glow' : '';
             
@@ -99,7 +94,6 @@ document.addEventListener('DOMContentLoaded', () => {
         moneyVal.textContent = char.money.toLocaleString();
         statusIcon.textContent = getStatusIcons(char);
         
-        // 상태 클래스 업데이트
         if (char.health <= 0) card.classList.add('exhausted');
         else card.classList.remove('exhausted');
 
@@ -108,7 +102,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const events = [
-        // 체력 관련
         { 
             code: (c1) => `시나모롤.선물하기("${c1.name}", "비타민");`,
             desc: (c1) => `👉 ${c1.name}님이 시나모롤에게 비타민을 선물받아 체력이 15 증가합니다!`,
@@ -129,7 +122,6 @@ document.addEventListener('DOMContentLoaded', () => {
             desc: (c1) => `👉 따뜻한 응원 메시지가 도착했습니다! ${c1.name}님의 체력이 10 증가합니다.`,
             action: (c1) => { c1.health = Math.min(MAX_HEALTH, c1.health + 10); animateCharacter(c1.id, 'gain'); updateCharacterUI(c1); }
         },
-        // 포만감 관련
         {
             code: (c1) => `if (맛집.발견()) { ${c1.name}.먹방(); }`,
             desc: (c1) => `👉 ${c1.name}님이 숨겨진 맛집을 발견했습니다! 포만감이 25 증가합니다. 🍔`,
@@ -155,7 +147,6 @@ document.addEventListener('DOMContentLoaded', () => {
             desc: (c1) => `👉 ${c1.name}님의 배달이 갑자기 취소되었습니다... 포만감이 5 감소합니다.`,
             action: (c1) => { c1.satiety = Math.max(0, c1.satiety - 5); animateCharacter(c1.id, 'loss'); updateCharacterUI(c1); }
         },
-        // 재산 관련
         {
             code: (c1) => `계좌.입금("${c1.name}", 50000); // 보너스`,
             desc: (c1) => `👉 와우! ${c1.name}님에게 특별 보너스 50,000원이 입금되었습니다! 💰`,
@@ -189,12 +180,10 @@ document.addEventListener('DOMContentLoaded', () => {
         isProcessing = true;
         codeButton.disabled = true;
 
-        sounds.click.play().catch(e => {});
         codeOutput.innerHTML = `<div class="code-line comment">// 시나모롤의 코딩 스타트...</div>`;
         
-        // 1% 확률로 서버 대폭발
         if (Math.random() < 0.01) {
-            await new Promise(r => setTimeout(r, 800));
+            await new Promise(r => setTimeout(r, 1000));
             const crashCode = document.createElement('div');
             crashCode.className = 'code-line error';
             crashCode.textContent = `> { system.reboot(); all_characters.reset(); }`;
@@ -217,22 +206,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const resultCount = Math.floor(Math.random() * 3) + 3;
 
         for (let i = 1; i <= resultCount; i++) {
-            await new Promise(resolve => setTimeout(resolve, 800)); 
+            await new Promise(resolve => setTimeout(resolve, 1000)); 
             sounds.typing.play().catch(e => {});
 
-            // 조대환 이스터 에그 (15% 확률)
             if (Math.random() < 0.15) {
                 const easterEgg = document.createElement('div');
                 easterEgg.className = 'code-line comment';
                 easterEgg.textContent = `// 미래에 100억을 벌 사나이, 조대환이 지나갑니다... 💎`;
                 codeOutput.appendChild(easterEgg);
+                codeOutput.scrollTop = codeOutput.scrollHeight;
+                await new Promise(r => setTimeout(r, 1000));
             }
 
             const char1 = characters[Math.floor(Math.random() * characters.length)];
             let char2 = characters[Math.floor(Math.random() * characters.length)];
             while (char1 === char2) char2 = characters[Math.floor(Math.random() * characters.length)];
 
-            // 롤 듀오 신청 특수 연출 (20% 확률로 발생시키거나 기존 이벤트를 대체)
             if (Math.random() < 0.25) {
                 const duoReqCode = document.createElement('div');
                 duoReqCode.className = 'code-line';
@@ -245,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 codeOutput.appendChild(duoReqDesc);
                 codeOutput.scrollTop = codeOutput.scrollHeight;
 
-                await new Promise(r => setTimeout(r, 1000)); // 1초 대기
+                await new Promise(r => setTimeout(r, 1000));
 
                 const success = Math.random() > 0.5;
                 const duoResCode = document.createElement('div');
@@ -262,16 +251,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     animateCharacter(char1.id, 'loss');
                 }
                 updateCharacterUI(char1); updateCharacterUI(char2);
+                codeOutput.scrollTop = codeOutput.scrollHeight;
+                await new Promise(r => setTimeout(r, 1000));
             } else {
-                // 일반 이벤트
                 const event = events[Math.floor(Math.random() * events.length)];
                 
                 const codeDiv = document.createElement('div');
                 codeDiv.className = 'code-line';
                 codeDiv.textContent = `> ${event.code(char1, char2)}`;
                 codeOutput.appendChild(codeDiv);
+                codeOutput.scrollTop = codeOutput.scrollHeight;
 
-                await new Promise(r => setTimeout(r, 400));
+                await new Promise(r => setTimeout(r, 1000));
                 
                 const descDiv = document.createElement('div');
                 descDiv.className = 'code-line result-text';
@@ -279,9 +270,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 codeOutput.appendChild(descDiv);
 
                 event.action(char1, char2);
+                codeOutput.scrollTop = codeOutput.scrollHeight;
+                await new Promise(r => setTimeout(r, 1000));
             }
 
-            // 상태 메시지 체크
             if (char1.health <= 0) {
                 const errDiv = document.createElement('div');
                 errDiv.className = 'code-line error';
@@ -293,7 +285,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 happyDiv.textContent = `✨ ${char1.name}님이 배불러서 매우 행복해합니다!`;
                 codeOutput.appendChild(happyDiv);
             }
-
             codeOutput.scrollTop = codeOutput.scrollHeight;
         }
 

@@ -1,14 +1,37 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hello World</title>
-  <link href='/style.css' rel='stylesheet'>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>코딩하는 시나모롤</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <h1>Hello, world!</h1>
-  <button onclick="console.log('hello');">Press me</button>
-  <script defer type="text/javascript" src="/main.js"></script>
+    <div id="app-container">
+        <header>
+            <h1>코딩하는 시나모롤과 친구들</h1>
+        </header>
+        <main id="main-content">
+            <section id="cinnamon-section">
+                <div class="cinnamon-card">
+                    <img src="coding cinnamonroll.jpg" alt="코딩하는 시나모롤" id="cinnamon-img">
+                    <div id="code-output" class="code-box">
+                        <p>시나모롤이 코딩할 준비를 하고 있어요...</p>
+                    </div>
+                    <button id="code-button">코딩 시작! ✨</button>
+                </div>
+            </section>
+            <section id="characters-section">
+                <h2>캐릭터 상태</h2>
+                <div id="character-grid">
+                    <!-- JavaScript로 캐릭터 카드 생성 -->
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="main.js"></script>
 </body>
 </html>

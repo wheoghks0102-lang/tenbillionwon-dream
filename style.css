@@ -74,7 +74,7 @@ header::before { content: '☁️'; font-size: 2em; position: absolute; top: 10p
     padding: 20px;
     border-radius: 20px;
     text-align: left;
-    height: 300px;
+    height: 350px; /* 높이 약간 조절 */
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 14px;
     line-height: 1.6;
@@ -96,27 +96,43 @@ header::before { content: '☁️'; font-size: 2em; position: absolute; top: 10p
     font-style: italic;
 }
 
+/* 이벤트 타입별 색상 */
+.code-line.positive {
+    color: #d53f8c; /* 분홍색/금색 계열 */
+    font-weight: bold;
+    text-shadow: 0 0 1px rgba(213, 63, 140, 0.2);
+}
+
+.code-line.negative {
+    color: #e53e3e; /* 빨간색 */
+    font-weight: bold;
+}
+
+.code-line.system {
+    color: #3182ce; /* 파란색/하늘색 */
+}
+
 .code-line.result-text {
-    color: #2b6cb0;
+    color: #2d3748;
     font-weight: 700;
     padding-left: 15px;
     margin-bottom: 12px;
 }
 
-.code-line.error {
-    color: #e53e3e;
+.code-line.cinnamoroll-reaction {
+    color: #5d9cec;
     font-weight: bold;
-    background-color: #fff5f5;
-    padding: 5px;
-    border-radius: 5px;
+    background-color: #f0f9ff;
+    padding: 8px;
+    border-radius: 10px;
+    margin-top: 10px;
+    border-left: 4px solid #5d9cec;
+    animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
-.code-line.success {
-    color: #38a169;
-    font-weight: bold;
-    background-color: #f0fff4;
-    padding: 5px;
-    border-radius: 5px;
+@keyframes bounceIn {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
 }
 
 #code-button {
@@ -178,49 +194,26 @@ h2 {
     border: 3px solid transparent;
 }
 
-.character-card:hover {
-    transform: translateY(-5px);
-}
-
 .character-card.exhausted {
     opacity: 0.5;
     filter: grayscale(40%);
-    border-color: #cbd5e0;
-}
-
-/* 특수 상태 효과 */
-.card-header {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 15px;
-    position: relative;
-}
-
-.status-icon {
-    font-size: 1.4em;
-    position: absolute;
-    right: 0;
-    top: -5px;
 }
 
 /* 부자 효과 (강화된 Glow) */
 @keyframes wealthy-animation {
-    0% { border-color: #ffd700; box-shadow: 0 0 10px #ffd700, 0 0 5px #fff; transform: scale(1); }
-    25% { border-color: #ff4500; box-shadow: 0 0 30px #ff4500, 0 0 10px #ff0; transform: scale(1.02); }
-    50% { border-color: #ffd700; box-shadow: 0 0 50px #ffd700, 0 0 20px #fff; transform: scale(1.04); }
-    75% { border-color: #ff8c00; box-shadow: 0 0 30px #ff8c00, 0 0 10px #ff0; transform: scale(1.02); }
-    100% { border-color: #ffd700; box-shadow: 0 0 10px #ffd700, 0 0 5px #fff; transform: scale(1); }
+    0% { border-color: #ffd700; box-shadow: 0 0 10px #ffd700; transform: scale(1); }
+    50% { border-color: #ff4500; box-shadow: 0 0 30px #ff4500; transform: scale(1.04); }
+    100% { border-color: #ffd700; box-shadow: 0 0 10px #ffd700; transform: scale(1); }
 }
 
 .wealthy-glow {
     animation: wealthy-animation 1s infinite;
     background: linear-gradient(135deg, #ffffff 0%, #fff9c4 100%);
-    z-index: 10;
 }
 
-/* 애니메이션 효과 */
+.pulse-gain { animation: pulse-gain 0.6s ease-out; }
+.pulse-loss { animation: pulse-loss 0.6s ease-out; }
+
 @keyframes pulse-gain {
     0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.7); }
     70% { transform: scale(1.03); box-shadow: 0 0 0 20px rgba(72, 187, 120, 0); }
@@ -233,15 +226,11 @@ h2 {
     100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245, 101, 101, 0); }
 }
 
-.pulse-gain { animation: pulse-gain 0.6s ease-out; }
-.pulse-loss { animation: pulse-loss 0.6s ease-out; }
-
 .character-name { font-size: 1.4em; font-weight: 700; color: #5d9cec; margin: 0; }
 .status-bar-container { margin-bottom: 15px; }
 .status-label { font-size: 0.95em; color: #718096; margin-bottom: 8px; font-weight: 600; }
 .status-bar { width: 100%; height: 18px; background-color: #edf2f7; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; }
 .status-bar-inner { height: 100%; border-radius: 10px; transition: width 0.5s ease-out; }
-
 .health-bar { background: linear-gradient(90deg, #ff9a9e 0%, #fecfef 100%); }
 .satiety-bar { background: linear-gradient(90deg, #f6d365 0%, #fda085 100%); }
 

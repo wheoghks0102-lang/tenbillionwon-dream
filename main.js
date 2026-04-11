@@ -1,11 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
     let characters = [
-        { id: 1, name: '심우성', health: 60, satiety: 60, money: 1000 },
-        { id: 2, name: '채의진', health: 60, satiety: 60, money: 1000 },
-        { id: 3, name: '조윤혜', health: 60, satiety: 60, money: 1000 },
-        { id: 4, name: '조대환', health: 60, satiety: 60, money: 1000 },
-        { id: 5, name: '최준', health: 60, satiety: 60, money: 1000 },
-        { id: 6, name: '전유희', health: 60, satiety: 60, money: 1000 },
+        { id: 1, name: '심우성', health: 50, satiety: 50, money: 1000 },
+        { id: 2, name: '채의진', health: 50, satiety: 50, money: 1000 },
+        { id: 3, name: '조윤혜', health: 50, satiety: 50, money: 1000 },
+        { id: 4, name: '조대환', health: 50, satiety: 50, money: 1000 },
+        { id: 5, name: '최준', health: 50, satiety: 50, money: 1000 },
+        { id: 6, name: '전유희', health: 50, satiety: 50, money: 1000 },
     ];
 
     const MAX_HEALTH = 100;
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateCharacterUI(char) {
         const card = document.getElementById(`char-${char.id}`);
-        if (!card) return;
+        if (!char || !card) return;
         card.querySelector('.health-bar').style.width = `${char.health}%`;
         card.querySelector('.health-val').textContent = char.health;
         card.querySelector('.satiety-bar').style.width = `${char.satiety}%`;
@@ -97,16 +97,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 c1.money = Math.max(0, c1.money - 50000);
                 animateCharacter(c1.id, 'loss'); updateCharacterUI(c1);
                 characters.filter(c => c.id !== c1.id).forEach(c => {
-                    c.satiety = Math.min(MAX_SATIETY, c.satiety + 20);
+                    c.satiety = Math.min(MAX_SATIETY, c.satiety + 15); // 난이도 조절: 회복량 감소
                     animateCharacter(c.id, 'gain'); updateCharacterUI(c);
                 });
+                return `[${c1.name}: 재산 -50,000 / 나머지: 포만감 +15]`;
             }
         },
         {
             type: 'negative', name: '단톡방 고백 공격',
             code: (c1, c2) => `try { ${c1.name}.고백(${c2.name}); } catch { ${c1.name}.멘탈바사삭; }`,
-            desc: (c1, c2) => `👉 ${c1.name}님의 고백 공격! 결과는... 당연히 거절입니다. 체력이 20 감소합니다. 💔`,
-            action: (c1) => { c1.health = Math.max(0, c1.health - 20); animateCharacter(c1.id, 'loss'); updateCharacterUI(c1); }
+            desc: (c1, c2) => `👉 ${c1.name}님의 고백 공격! 결과는... 당연히 거절입니다. 체력이 크게 감소합니다. 💔`,
+            action: (c1) => { 
+                c1.health = Math.max(0, c1.health - 25); // 난이도 조절: 피해량 증가
+                animateCharacter(c1.id, 'loss'); updateCharacterUI(c1); 
+                return `[${c1.name}: 체력 -25]`;
+            }
         },
         {
             type: 'positive', name: '공동 구매 성공',
@@ -114,10 +119,11 @@ document.addEventListener('DOMContentLoaded', () => {
             desc: (c1, c2, c3) => `👉 세 분이서 공동 구매에 성공했습니다! 저렴하게 맛있는 걸 먹었네요.`,
             action: (c1, c2, c3) => {
                 [c1, c2, c3].forEach(c => {
-                    c.money = Math.max(0, c.money - 5000);
+                    c.money = Math.max(0, c.money - 8000); // 난이도 조절: 비용 증가
                     c.satiety = Math.min(MAX_SATIETY, c.satiety + 15);
                     animateCharacter(c.id, 'gain'); updateCharacterUI(c);
                 });
+                return `[${c1.name},${c2.name},${c3.name}: 재산 -8,000, 포만감 +15]`;
             }
         },
         {
@@ -126,6 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
             desc: (c1, c2) => `👉 ${c1.name}님과 ${c2.name}님이 비밀을 공유하며 유대감이 상승했습니다!`,
             action: (c1, c2) => {
                 [c1, c2].forEach(c => { c.health = Math.min(MAX_HEALTH, c.health + 10); animateCharacter(c.id, 'gain'); updateCharacterUI(c); });
+                return `[${c1.name},${c2.name}: 체력 +10]`;
             }
         },
         {
@@ -133,9 +140,10 @@ document.addEventListener('DOMContentLoaded', () => {
             code: (c1) => `while(running) { ${c1.name}.speed++; }`,
             desc: (c1) => `👉 새벽 러닝으로 갓생 사는 ${c1.name}님! 체력이 오르고 배가 고파집니다.`,
             action: (c1) => {
-                c1.health = Math.min(MAX_HEALTH, c1.health + 20);
-                c1.satiety = Math.max(0, c1.satiety - 15);
+                c1.health = Math.min(MAX_HEALTH, c1.health + 15); // 난이도 조절: 회복량 감소
+                c1.satiety = Math.max(0, c1.satiety - 20); // 난이도 조절: 감소량 증가
                 animateCharacter(c1.id, 'gain'); updateCharacterUI(c1);
+                return `[${c1.name}: 체력 +15, 포만감 -20]`;
             }
         },
         {
@@ -143,8 +151,9 @@ document.addEventListener('DOMContentLoaded', () => {
             code: (c1) => `if (${c1.name}.낚시 == "월척") { ${c1.name}.회_파티(); }`,
             desc: (c1) => `👉 대박! ${c1.name}님이 전설의 물고기를 잡았습니다. 재산과 포만감이 상승! 🎣`,
             action: (c1) => {
-                c1.money += 20000; c1.satiety = Math.min(MAX_SATIETY, c1.satiety + 10);
+                c1.money += 15000; c1.satiety = Math.min(MAX_SATIETY, c1.satiety + 10);
                 animateCharacter(c1.id, 'gain'); updateCharacterUI(c1);
+                return `[${c1.name}: 재산 +15,000, 포만감 +10]`;
             }
         },
         {
@@ -152,8 +161,10 @@ document.addEventListener('DOMContentLoaded', () => {
             code: (c1) => `${c1.name}.mix(진토닉); // 캬~ 🍸`,
             desc: (c1) => `👉 ${c1.name}님의 홈바 오픈! 기분이 좋아 체력이 오르지만 돈을 썼습니다.`,
             action: (c1) => {
-                c1.health = Math.min(MAX_HEALTH, c1.health + 15); c1.money = Math.max(0, c1.money - 5000);
+                c1.health = Math.min(MAX_HEALTH, c1.health + 10);
+                c1.money = Math.max(0, c1.money - 10000); // 난이도 조절: 비용 증가
                 animateCharacter(c1.id, 'gain'); updateCharacterUI(c1);
+                return `[${c1.name}: 체력 +10, 재산 -10,000]`;
             }
         },
         {
@@ -161,33 +172,50 @@ document.addEventListener('DOMContentLoaded', () => {
             code: (c1) => `${c1.name}.study_hard(); // 펜 소리만 들림`,
             desc: (c1) => `👉 ${c1.name}님이 공부에 집중합니다. 피곤하지만 장학금을 기대해 봅니다.`,
             action: (c1) => {
-                c1.health = Math.max(0, c1.health - 10); c1.money += 5000;
+                c1.health = Math.max(0, c1.health - 15); // 난이도 조절: 피로도 증가
+                c1.money += 5000;
                 animateCharacter(c1.id, 'loss'); updateCharacterUI(c1);
+                return `[${c1.name}: 체력 -15, 재산 +5,000]`;
             }
         },
         {
             type: 'negative', name: '무한 루프 발생',
             code: (c1) => `while(true) { ${c1.name}.댄스(); }`,
             desc: (c1) => `👉 멈추지 않는 댄스 본능! ${c1.name}님이 춤추다 지쳐 쓰러집니다. 💃`,
-            action: (c1) => { c1.health = Math.max(0, c1.health - 30); animateCharacter(c1.id, 'loss'); updateCharacterUI(c1); }
+            action: (c1) => { 
+                c1.health = Math.max(0, c1.health - 35); // 난이도 조절: 피해량 증가
+                animateCharacter(c1.id, 'loss'); updateCharacterUI(c1); 
+                return `[${c1.name}: 체력 -35]`;
+            }
         },
         {
             type: 'positive', name: '복권 당첨 버그',
             code: (c1) => `system.money_glitch(${c1.name});`,
             desc: (c1) => `👉 축하합니다! ${c1.name}님에게 복권 당첨 버그가 발생했습니다! 럭키! 🍀`,
-            action: (c1) => { c1.money += 100000; animateCharacter(c1.id, 'gain'); updateCharacterUI(c1); }
+            action: (c1) => { 
+                c1.money += 50000; // 난이도 조절: 당첨금 감소
+                animateCharacter(c1.id, 'gain'); updateCharacterUI(c1); 
+                return `[${c1.name}: 재산 +50,000]`;
+            }
         },
         {
             type: 'system', name: '서버 점검 시간',
             code: () => `System.sleep(); // 모두 정지`,
             desc: () => `👉 서버 점검으로 강제 휴식 시간입니다. 모든 캐릭터의 체력이 5 회복됩니다.`,
-            action: () => { characters.forEach(c => { c.health = Math.min(MAX_HEALTH, c.health + 5); updateCharacterUI(c); }); }
+            action: () => { 
+                characters.forEach(c => { c.health = Math.min(MAX_HEALTH, c.health + 5); updateCharacterUI(c); }); 
+                return `[전체: 체력 +5]`;
+            }
         },
         {
             type: 'negative', name: '다이어트 버그',
             code: (c1) => `delete ${c1.name}.satiety; // 배고픔 삭제`,
             desc: (c1) => `👉 이런! 다이어트 버그로 ${c1.name}님의 포만감이 증발했습니다. 꼬르륵...`,
-            action: (c1) => { c1.satiety = 0; animateCharacter(c1.id, 'loss'); updateCharacterUI(c1); }
+            action: (c1) => { 
+                c1.satiety = 0; 
+                animateCharacter(c1.id, 'loss'); updateCharacterUI(c1); 
+                return `[${c1.name}: 포만감 0으로 초기화]`;
+            }
         }
     ];
 
@@ -208,15 +236,12 @@ document.addEventListener('DOMContentLoaded', () => {
         codeOutput.innerHTML = `<div class="code-line comment">// 시나모롤의 코딩 스타트...</div>`;
         
         const resultCount = Math.floor(Math.random() * 3) + 4;
-        const availableEvents = [...events]; // 이벤트 섞기 위해 복사
+        const availableEvents = [...events];
 
         for (let i = 1; i <= resultCount; i++) {
             await new Promise(r => setTimeout(r, 1000));
-            
             const eventIndex = Math.floor(Math.random() * availableEvents.length);
             const event = availableEvents[eventIndex];
-            
-            // 사용한 이벤트는 잠시 제거하여 다양성 확보
             if (availableEvents.length > 5) availableEvents.splice(eventIndex, 1);
 
             const c1 = characters[Math.floor(Math.random() * characters.length)];
@@ -237,8 +262,15 @@ document.addEventListener('DOMContentLoaded', () => {
             descDiv.textContent = event.desc(c1, c2, c3);
             codeOutput.appendChild(descDiv);
             
-            event.action(c1, c2, c3);
+            // 변경 내역 수집 및 출력
+            const summary = event.action(c1, c2, c3);
+            const summaryDiv = document.createElement('div');
+            summaryDiv.className = 'code-line comment summary-line';
+            summaryDiv.textContent = `// ${summary}`;
+            codeOutput.appendChild(summaryDiv);
+
             codeOutput.scrollTop = codeOutput.scrollHeight;
+            await new Promise(r => setTimeout(r, 500));
         }
 
         await new Promise(r => setTimeout(r, 1000));

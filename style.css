@@ -56,8 +56,9 @@ header h1 {
 }
 
 .code-box {
-    background-color: #2d3748; /* 어두운 코드 배경 */
-    color: #f7fafc; /* 밝은 텍스트 */
+    background-color: #ffffff; /* 흰색 배경 */
+    color: #333; /* 어두운 회색/검정색 텍스트 */
+    border: 2px solid #e2e8f0; /* 테두리 추가 */
     padding: 15px;
     border-radius: 10px;
     text-align: left;
@@ -98,6 +99,7 @@ header h1 {
 h2 {
     color: #5d9cec;
     text-align: center;
+    margin-top: 0; /* 상단 여백 제거하여 높이 맞춤 */
     margin-bottom: 20px;
 }
 

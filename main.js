@@ -1,11 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
     let characters = [
-        { id: 1, name: '심우성', health: 50, satiety: 50, money: 1000 },
-        { id: 2, name: '채의진', health: 50, satiety: 50, money: 1000 },
-        { id: 3, name: '조윤혜', health: 50, satiety: 50, money: 1000 },
-        { id: 4, name: '조대환', health: 50, satiety: 50, money: 1000 },
-        { id: 5, name: '최준', health: 50, satiety: 50, money: 1000 },
-        { id: 6, name: '전유희', health: 50, satiety: 50, money: 1000 },
+        { id: 1, name: '심우성', img: 'sim.png', health: 50, satiety: 50, money: 1000 },
+        { id: 2, name: '채의진', img: 'chae.png', health: 50, satiety: 50, money: 1000 },
+        { id: 3, name: '조윤혜', img: 'yoon.png', health: 50, satiety: 50, money: 1000 },
+        { id: 4, name: '조대환', img: 'jo.png', health: 50, satiety: 50, money: 1000 },
+        { id: 5, name: '최준', img: 'choi.png', health: 50, satiety: 50, money: 1000 },
+        { id: 6, name: '전유희', img: 'jeon.png', health: 50, satiety: 50, money: 1000 },
     ];
 
     const MAX_HEALTH = 100;
@@ -45,14 +45,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h3 class="character-name">${char.name}</h3>
                     <span class="status-icon">${getStatusIcons(char)}</span>
                 </div>
+                <div class="character-img-container">
+                    <img src="${char.img}" alt="${char.name}" class="character-avatar" onerror="this.src='https://via.placeholder.com/150?text=${char.name}'">
+                </div>
                 <div class="status-bar-container">
-                    <p class="status-label">체력: <span class="health-val">${char.health}</span> / ${MAX_HEALTH}</p>
+                    <div class="status-label-group">
+                        <span class="status-label-text">HP</span>
+                        <span class="status-val health-val">${char.health}</span>
+                    </div>
                     <div class="status-bar">
                         <div class="status-bar-inner health-bar" style="width: ${char.health}%;"></div>
                     </div>
                 </div>
                 <div class="status-bar-container">
-                    <p class="status-label">포만감: <span class="satiety-val">${char.satiety}</span> / ${MAX_SATIETY}</p>
+                    <div class="status-label-group">
+                        <span class="status-label-text">HUNGRY</span>
+                        <span class="status-val satiety-val">${char.satiety}</span>
+                    </div>
                     <div class="status-bar">
                         <div class="status-bar-inner satiety-bar" style="width: ${char.satiety}%;"></div>
                     </div>
@@ -97,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 c1.money = Math.max(0, c1.money - 50000);
                 animateCharacter(c1.id, 'loss'); updateCharacterUI(c1);
                 characters.filter(c => c.id !== c1.id).forEach(c => {
-                    c.satiety = Math.min(MAX_SATIETY, c.satiety + 15); // 난이도 조절: 회복량 감소
+                    c.satiety = Math.min(MAX_SATIETY, c.satiety + 15);
                     animateCharacter(c.id, 'gain'); updateCharacterUI(c);
                 });
                 return `[${c1.name}: 재산 -50,000 / 나머지: 포만감 +15]`;
@@ -108,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
             code: (c1, c2) => `try { ${c1.name}.고백(${c2.name}); } catch { ${c1.name}.멘탈바사삭; }`,
             desc: (c1, c2) => `👉 ${c1.name}님의 고백 공격! 결과는... 당연히 거절입니다. 체력이 크게 감소합니다. 💔`,
             action: (c1) => { 
-                c1.health = Math.max(0, c1.health - 25); // 난이도 조절: 피해량 증가
+                c1.health = Math.max(0, c1.health - 25);
                 animateCharacter(c1.id, 'loss'); updateCharacterUI(c1); 
                 return `[${c1.name}: 체력 -25]`;
             }
@@ -119,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
             desc: (c1, c2, c3) => `👉 세 분이서 공동 구매에 성공했습니다! 저렴하게 맛있는 걸 먹었네요.`,
             action: (c1, c2, c3) => {
                 [c1, c2, c3].forEach(c => {
-                    c.money = Math.max(0, c.money - 8000); // 난이도 조절: 비용 증가
+                    c.money = Math.max(0, c.money - 8000);
                     c.satiety = Math.min(MAX_SATIETY, c.satiety + 15);
                     animateCharacter(c.id, 'gain'); updateCharacterUI(c);
                 });
@@ -140,8 +149,8 @@ document.addEventListener('DOMContentLoaded', () => {
             code: (c1) => `while(running) { ${c1.name}.speed++; }`,
             desc: (c1) => `👉 새벽 러닝으로 갓생 사는 ${c1.name}님! 체력이 오르고 배가 고파집니다.`,
             action: (c1) => {
-                c1.health = Math.min(MAX_HEALTH, c1.health + 15); // 난이도 조절: 회복량 감소
-                c1.satiety = Math.max(0, c1.satiety - 20); // 난이도 조절: 감소량 증가
+                c1.health = Math.min(MAX_HEALTH, c1.health + 15);
+                c1.satiety = Math.max(0, c1.satiety - 20);
                 animateCharacter(c1.id, 'gain'); updateCharacterUI(c1);
                 return `[${c1.name}: 체력 +15, 포만감 -20]`;
             }
@@ -162,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
             desc: (c1) => `👉 ${c1.name}님의 홈바 오픈! 기분이 좋아 체력이 오르지만 돈을 썼습니다.`,
             action: (c1) => {
                 c1.health = Math.min(MAX_HEALTH, c1.health + 10);
-                c1.money = Math.max(0, c1.money - 10000); // 난이도 조절: 비용 증가
+                c1.money = Math.max(0, c1.money - 10000);
                 animateCharacter(c1.id, 'gain'); updateCharacterUI(c1);
                 return `[${c1.name}: 체력 +10, 재산 -10,000]`;
             }
@@ -172,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
             code: (c1) => `${c1.name}.study_hard(); // 펜 소리만 들림`,
             desc: (c1) => `👉 ${c1.name}님이 공부에 집중합니다. 피곤하지만 장학금을 기대해 봅니다.`,
             action: (c1) => {
-                c1.health = Math.max(0, c1.health - 15); // 난이도 조절: 피로도 증가
+                c1.health = Math.max(0, c1.health - 15);
                 c1.money += 5000;
                 animateCharacter(c1.id, 'loss'); updateCharacterUI(c1);
                 return `[${c1.name}: 체력 -15, 재산 +5,000]`;
@@ -183,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
             code: (c1) => `while(true) { ${c1.name}.댄스(); }`,
             desc: (c1) => `👉 멈추지 않는 댄스 본능! ${c1.name}님이 춤추다 지쳐 쓰러집니다. 💃`,
             action: (c1) => { 
-                c1.health = Math.max(0, c1.health - 35); // 난이도 조절: 피해량 증가
+                c1.health = Math.max(0, c1.health - 35);
                 animateCharacter(c1.id, 'loss'); updateCharacterUI(c1); 
                 return `[${c1.name}: 체력 -35]`;
             }
@@ -193,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
             code: (c1) => `system.money_glitch(${c1.name});`,
             desc: (c1) => `👉 축하합니다! ${c1.name}님에게 복권 당첨 버그가 발생했습니다! 럭키! 🍀`,
             action: (c1) => { 
-                c1.money += 50000; // 난이도 조절: 당첨금 감소
+                c1.money += 50000;
                 animateCharacter(c1.id, 'gain'); updateCharacterUI(c1); 
                 return `[${c1.name}: 재산 +50,000]`;
             }
@@ -262,7 +271,6 @@ document.addEventListener('DOMContentLoaded', () => {
             descDiv.textContent = event.desc(c1, c2, c3);
             codeOutput.appendChild(descDiv);
             
-            // 변경 내역 수집 및 출력
             const summary = event.action(c1, c2, c3);
             const summaryDiv = document.createElement('div');
             summaryDiv.className = 'code-line comment summary-line';

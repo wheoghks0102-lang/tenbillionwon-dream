@@ -136,7 +136,7 @@ h2 {
     text-align: center;
     margin-top: 0;
     margin-bottom: 25px;
-    font-size: 2em;
+    font-size: 1.5em; /* 글씨 크기 줄임 */
     background: white;
     display: inline-block;
     padding: 5px 25px;
@@ -146,7 +146,7 @@ h2 {
 
 #character-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(3, 1fr); /* 3열로 고정 */
     gap: 25px;
 }
 

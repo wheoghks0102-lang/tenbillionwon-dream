@@ -12,19 +12,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const MAX_SATIETY = 100;
     const MAX_MONEY = 1000000;
 
+    // 사운드 효과 설정
+    const sounds = {
+        click: new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'), // 뾰로롱/팝
+        typing: new Audio('https://assets.mixkit.co/active_storage/sfx/1583/1583-preview.mp3'), // 키보드
+        gain: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'),  // 긍정
+        loss: new Audio('https://assets.mixkit.co/active_storage/sfx/2014/2014-preview.mp3')   // 부정
+    };
+
     const characterGrid = document.getElementById('character-grid');
     const codeOutput = document.getElementById('code-output');
     const codeButton = document.getElementById('code-button');
+
+    function getStatusIcons(char) {
+        let icons = '';
+        if (char.health < 20) icons += '💀';
+        else if (char.health < 50) icons += '💦';
+        
+        if (char.satiety < 30) icons += '🍕?';
+        return icons;
+    }
 
     // 캐릭터 UI 렌더링 함수
     function renderCharacters() {
         characterGrid.innerHTML = '';
         characters.forEach(char => {
             const charCard = document.createElement('div');
-            charCard.className = 'character-card';
+            charCard.className = `character-card ${char.money >= 10000 ? 'wealthy-glow' : ''}`;
             charCard.id = `char-${char.id}`;
             charCard.innerHTML = `
-                <h3 class="character-name">${char.name}</h3>
+                <div class="card-header">
+                    <h3 class="character-name">${char.name}</h3>
+                    <span class="status-icon">${getStatusIcons(char)}</span>
+                </div>
                 <div class="status-bar-container">
                     <p class="status-label">체력: <span class="health-val">${char.health}</span> / ${MAX_HEALTH}</p>
                     <div class="status-bar">
@@ -43,17 +63,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 특정 캐릭터 카드에 애니메이션 효과 추가
     function animateCharacter(charId, type) {
         const card = document.getElementById(`char-${charId}`);
         if (!card) return;
         
         card.classList.remove('pulse-gain', 'pulse-loss');
-        void card.offsetWidth; // 리플로우
+        void card.offsetWidth; 
         card.classList.add(type === 'gain' ? 'pulse-gain' : 'pulse-loss');
+        
+        // 사운드 재생
+        if (type === 'gain') sounds.gain.play().catch(e => {});
+        else sounds.loss.play().catch(e => {});
     }
 
-    // 캐릭터 정보 업데이트 (UI 부분 업데이트)
     function updateCharacterUI(char) {
         const card = document.getElementById(`char-${char.id}`);
         if (!card) return;
@@ -63,12 +85,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const satietyBar = card.querySelector('.satiety-bar');
         const satietyVal = card.querySelector('.satiety-val');
         const moneyVal = card.querySelector('.money-val');
+        const statusIcon = card.querySelector('.status-icon');
 
         healthBar.style.width = `${char.health}%`;
         healthVal.textContent = char.health;
         satietyBar.style.width = `${char.satiety}%`;
         satietyVal.textContent = char.satiety;
         moneyVal.textContent = char.money.toLocaleString();
+        
+        // 아이콘 업데이트
+        statusIcon.textContent = getStatusIcons(char);
+        
+        // 부자 효과 업데이트
+        if (char.money >= 10000) {
+            card.classList.add('wealthy-glow');
+        } else {
+            card.classList.remove('wealthy-glow');
+        }
     }
 
     const events = [
@@ -173,12 +206,15 @@ document.addEventListener('DOMContentLoaded', () => {
         isProcessing = true;
         codeButton.disabled = true;
 
+        // 시작 사운드
+        sounds.click.play().catch(e => {});
+
         codeOutput.innerHTML = `<div class="code-line comment">// 시나모롤의 코딩 스타트...</div>`;
         
         const resultCount = Math.floor(Math.random() * 3) + 3;
 
         for (let i = 1; i <= resultCount; i++) {
-            await new Promise(resolve => setTimeout(resolve, 800)); // 지연 시간
+            await new Promise(resolve => setTimeout(resolve, 800)); 
             
             const eventIndex = Math.floor(Math.random() * events.length);
             const event = events[eventIndex];
@@ -192,7 +228,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const char1 = characters[char1Index];
             const char2 = characters[char2Index];
 
-            // 1. 상황 메시지 출력
+            // 타이핑 사운드
+            sounds.typing.play().catch(e => {});
+
             const situationDiv = document.createElement('div');
             situationDiv.className = 'code-line comment';
             situationDiv.textContent = `// ${i}번째 상황`;
@@ -203,12 +241,10 @@ document.addEventListener('DOMContentLoaded', () => {
             codeDiv.textContent = `> ${event.message(char1, char2)}`;
             codeOutput.appendChild(codeDiv);
 
-            // 스크롤 자동 이동
             codeOutput.scrollTop = codeOutput.scrollHeight;
 
             await new Promise(resolve => setTimeout(resolve, 600));
 
-            // 2. 액션 실행 및 결과 출력
             const success = event.action(char1, char2);
             
             const resultDiv = document.createElement('div');
@@ -216,7 +252,6 @@ document.addEventListener('DOMContentLoaded', () => {
             resultDiv.textContent = `  ${event.result(char1, char2, success)}`;
             codeOutput.appendChild(resultDiv);
 
-            // 스크롤 자동 이동
             codeOutput.scrollTop = codeOutput.scrollHeight;
         }
 
@@ -232,6 +267,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     codeButton.addEventListener('click', processCoding);
 
-    // 초기 렌더링
     renderCharacters();
 });

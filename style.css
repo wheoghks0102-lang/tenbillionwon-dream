@@ -38,15 +38,15 @@ header::before { content: '☁️'; font-size: 2em; position: absolute; top: 10p
 
 #main-content {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: 30px;
-    align-items: center;
+    align-items: flex-start;
 }
 
 #cinnamon-section {
-    width: 100%;
-    max-width: 800px;
-    margin-top: 20px;
+    flex: 1;
+    min-width: 420px;
+    margin-top: 65px;
     display: flex;
 }
 

@@ -46,6 +46,7 @@ header::before { content: '☁️'; font-size: 2em; position: absolute; top: 10p
     flex: 1;
     min-width: 420px;
     margin-top: 65px;
+    display: flex;
 }
 
 .cinnamon-card {
@@ -55,6 +56,9 @@ header::before { content: '☁️'; font-size: 2em; position: absolute; top: 10p
     box-shadow: 0 15px 35px rgba(93, 156, 236, 0.15);
     text-align: center;
     border: 5px solid #f0f8ff;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 #cinnamon-img {
@@ -63,6 +67,7 @@ header::before { content: '☁️'; font-size: 2em; position: absolute; top: 10p
     border-radius: 25px;
     margin-bottom: 25px;
     border: 3px solid #e3f2fd;
+    align-self: center;
 }
 
 .code-box {
@@ -72,7 +77,8 @@ header::before { content: '☁️'; font-size: 2em; position: absolute; top: 10p
     padding: 20px;
     border-radius: 20px;
     text-align: left;
-    height: 350px;
+    flex-grow: 1; /* 고정 높이 제거하고 가득 채우기 */
+    min-height: 350px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 14px;
     line-height: 1.6;
@@ -109,6 +115,7 @@ header::before { content: '☁️'; font-size: 2em; position: absolute; top: 10p
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     box-shadow: 0 6px 15px rgba(255, 192, 203, 0.4);
+    align-self: center;
 }
 
 #code-button:hover:not(:disabled) { background-color: #ffafbd; transform: scale(1.05); }
@@ -152,6 +159,7 @@ h2 {
     display: flex;
     justify-content: center;
     align-items: flex-end;
+    background-color: #ffffff; /* 하얀색 배경 고정 */
 }
 
 .character-avatar {
@@ -199,7 +207,9 @@ h2 {
         max-width: 250px;
     }
     .code-box {
+        flex-grow: 0;
         height: 250px;
+        min-height: 200px;
     }
 }
 

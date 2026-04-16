@@ -2,12 +2,12 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Cinnamoroll Game Initializing...');
 
     let characters = [
-        { id: 1, name: '심우성', img: 'sim.png', health: 50, satiety: 50, money: 1000 },
-        { id: 2, name: '채의진', img: 'chae.png', health: 50, satiety: 50, money: 1000 },
-        { id: 3, name: '조윤혜', img: 'yoon.png', health: 50, satiety: 50, money: 1000 },
-        { id: 4, name: '조대환', img: 'jo.png', health: 50, satiety: 50, money: 1000 },
-        { id: 5, name: '최준', img: 'choi.png', health: 50, satiety: 50, money: 1000 },
-        { id: 6, name: '전유희', img: 'jeon.png', health: 50, satiety: 50, money: 1000 },
+        { id: 1, name: '심우성', img: 'sim.png', health: 50, satiety: 50, money: 1000, heightRank: 1 },
+        { id: 2, name: '채의진', img: 'chae.png', health: 50, satiety: 50, money: 1000, heightRank: 4 },
+        { id: 3, name: '조윤혜', img: 'yoon.png', health: 50, satiety: 50, money: 1000, heightRank: 5 },
+        { id: 4, name: '조대환', img: 'jo.png', health: 50, satiety: 50, money: 1000, heightRank: 2 },
+        { id: 5, name: '최준', img: 'choi.png', health: 50, satiety: 50, money: 1000, heightRank: 3 },
+        { id: 6, name: '전유희', img: 'jeon.png', health: 50, satiety: 50, money: 1000, heightRank: 3 },
     ];
 
     const MAX_HEALTH = 100;
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const charCard = document.createElement('div');
             const statusClass = char.health <= 0 ? 'exhausted' : '';
             const wealthyClass = char.money >= 10000 ? 'wealthy-glow' : '';
-            charCard.className = `character-card ${wealthyClass} ${statusClass}`;
+            charCard.className = `character-card ${wealthyClass} ${statusClass} height-rank-${char.heightRank}`;
             charCard.id = `char-${char.id}`;
             charCard.innerHTML = `
                 <div class="card-header">

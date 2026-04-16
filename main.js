@@ -50,15 +50,28 @@ document.addEventListener('DOMContentLoaded', () => {
             const charCard = document.createElement('div');
             const statusClass = char.health <= 0 ? 'exhausted' : '';
             const wealthyClass = char.money >= 10000 ? 'wealthy-glow' : '';
-            charCard.className = `character-card ${wealthyClass} ${statusClass} height-rank-${char.heightRank}`;
+            charCard.className = `character-card ${wealthyClass} ${statusClass}`;
             charCard.id = `char-${char.id}`;
+
+            // 이미지 결정 로직 (조대환 캐릭터 전용)
+            let currentImg = char.img;
+            if (char.id === 4) { // 조대환의 ID가 4임
+                if (char.money >= 30000) currentImg = 'jo_돈많은.png';
+                else if (char.money <= 5000) currentImg = 'jo_돈없는.png';
+                else if (char.satiety <= 30) currentImg = 'jo_배고픈.png';
+                else if (char.satiety >= 70) currentImg = 'jo_배부른.png';
+                else if (char.health <= 30) currentImg = 'jo_체력없는.png';
+                else if (char.health >= 70) currentImg = 'jo_체력많은.png';
+                else currentImg = 'jo.png';
+            }
+
             charCard.innerHTML = `
                 <div class="card-header">
                     <h3 class="character-name">${char.name}</h3>
                     <span class="status-icon">${getStatusIcons(char)}</span>
                 </div>
                 <div class="character-img-container">
-                    <img src="${char.img}" alt="${char.name}" class="character-avatar" onerror="this.src='https://via.placeholder.com/150?text=${encodeURIComponent(char.name)}'">
+                    <img src="${currentImg}" alt="${char.name}" class="character-avatar" onerror="this.src='https://via.placeholder.com/150?text=${encodeURIComponent(char.name)}'">
                 </div>
                 <div class="status-bar-container">
                     <div class="status-label-group">
@@ -102,6 +115,24 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateCharacterUI(char) {
         const card = document.getElementById(`char-${char.id}`);
         if (!char || !card) return;
+        
+        // 이미지 업데이트 (조대환 캐릭터 전용)
+        if (char.id === 4) {
+            let currentImg = char.img;
+            if (char.money >= 30000) currentImg = 'jo_돈많은.png';
+            else if (char.money <= 5000) currentImg = 'jo_돈없는.png';
+            else if (char.satiety <= 30) currentImg = 'jo_배고픈.png';
+            else if (char.satiety >= 70) currentImg = 'jo_배부른.png';
+            else if (char.health <= 30) currentImg = 'jo_체력없는.png';
+            else if (char.health >= 70) currentImg = 'jo_체력많은.png';
+            else currentImg = 'jo.png';
+            
+            const imgElement = card.querySelector('.character-avatar');
+            if (imgElement.src.indexOf(currentImg) === -1) {
+                imgElement.src = currentImg;
+            }
+        }
+
         card.querySelector('.health-bar').style.width = `${char.health}%`;
         card.querySelector('.health-val').textContent = char.health;
         card.querySelector('.satiety-bar').style.width = `${char.satiety}%`;

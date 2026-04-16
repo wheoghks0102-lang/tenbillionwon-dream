@@ -1,18 +1,20 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Online Cinnamoroll Game Initializing...');
 
-    // Gun.js Initialization
+    // Gun.js Initialization - Version v2 for global reset
     const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const world = gun.get('cinnamoroll-world-v1');
+    const world = gun.get('cinnamoroll-world-v2');
 
-    let characters = [
-        { id: 1, name: '심우성', prefix: 'sim', img: 'sim.png', health: 50, satiety: 50, money: 10000, heightRank: 1 },
-        { id: 2, name: '채의진', prefix: 'chae', img: 'chae.png', health: 50, satiety: 50, money: 10000, heightRank: 4 },
-        { id: 3, name: '조윤혜', prefix: 'yoon', img: 'yoon.png', health: 50, satiety: 50, money: 10000, heightRank: 5 },
-        { id: 4, name: '조대환', prefix: 'jo', img: 'jo.png', health: 50, satiety: 50, money: 10000, heightRank: 2 },
-        { id: 5, name: '최준', prefix: 'choi', img: 'choi.png', health: 50, satiety: 50, money: 10000, heightRank: 3 },
-        { id: 6, name: '전유희', prefix: 'jeon', img: 'jeon.png', health: 50, satiety: 50, money: 10000, heightRank: 3 },
+    const INITIAL_CHARACTERS = [
+        { id: 1, name: '심우성', prefix: 'sim', img: 'sim.png', health: 50, satiety: 50, money: 10000 },
+        { id: 2, name: '채의진', prefix: 'chae', img: 'chae.png', health: 50, satiety: 50, money: 10000 },
+        { id: 3, name: '조윤혜', prefix: 'yoon', img: 'yoon.png', health: 50, satiety: 50, money: 10000 },
+        { id: 4, name: '조대환', prefix: 'jo', img: 'jo.png', health: 50, satiety: 50, money: 10000 },
+        { id: 5, name: '최준', prefix: 'choi', img: 'choi.png', health: 50, satiety: 50, money: 10000 },
+        { id: 6, name: '전유희', prefix: 'jeon', img: 'jeon.png', health: 50, satiety: 50, money: 10000 },
     ];
+
+    let characters = JSON.parse(JSON.stringify(INITIAL_CHARACTERS));
 
     let myNickname = '';
     let dailyChances = 3;
@@ -32,13 +34,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const codeOutput = document.getElementById('code-output');
     const codeButton = document.getElementById('code-button');
     const attemptHistory = document.getElementById('attempt-history');
+    const titleH1 = document.querySelector('header h1');
 
-    // Sounds
-    const sounds = {
-        gain: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'),
-        loss: new Audio('https://assets.mixkit.co/active_storage/sfx/2014/2014-preview.mp3')
-    };
-    Object.values(sounds).forEach(s => { s.volume = 0.15; });
+    // Easter Egg Logic
+    let titleClickCount = 0;
+    titleH1.addEventListener('click', () => {
+        titleClickCount++;
+        if (titleClickCount === 15) {
+            titleClickCount = 0;
+            if (confirm('모든 캐릭터의 상태를 초기화할까요? (전체 유저 공유)')) {
+                resetAllSharedStates();
+            }
+        }
+    });
+
+    function resetAllSharedStates() {
+        INITIAL_CHARACTERS.forEach(char => {
+            world.get(`char_${char.id}`).put({
+                health: char.health,
+                satiety: char.satiety,
+                money: char.money
+            });
+        });
+        broadcastMessage(`시스템: 모든 캐릭터의 상태가 초기화되었습니다! ✨`);
+    }
 
     // Login Logic
     loginButton.addEventListener('click', () => {
@@ -63,7 +82,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = JSON.parse(stored);
             const timeDiff = now - data.lastTime;
             
-            // 24시간이 지났으면 초기화
             if (timeDiff >= 24 * 60 * 60 * 1000) {
                 dailyChances = 3;
             } else {
@@ -99,8 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function useChance() {
         dailyChances--;
-        // 마지막 코딩 시간은 3번째 기회를 다 썼을 때가 아니라 각 시도마다 갱신 (유저 요청: 3번 다 쓰면 24시간 뒤)
-        // 여기서는 "3번 다 썼을 때의 시점"을 기준으로 24시간을 체크하는 로직으로 구현
         lastCodingTime = Date.now();
         localStorage.setItem(`coding_chances_${myNickname}`, JSON.stringify({
             count: dailyChances,
@@ -122,7 +138,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Listen for coding attempts from others
         world.get('last_attempt').on(data => {
             if (data && data.user) {
                 addHistoryItem(data.user);
@@ -155,8 +170,6 @@ document.addEventListener('DOMContentLoaded', () => {
         div.innerHTML = `<strong>[${time}]</strong> ${user}님이 코딩을 시도했습니다!`;
         
         attemptHistory.prepend(div);
-        
-        // 너무 많으면 삭제
         if (attemptHistory.children.length > 20) {
             attemptHistory.removeChild(attemptHistory.lastChild);
         }
@@ -180,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (char.satiety >= 70) titles.push('<배부른>');
         if (char.health <= 30) titles.push('<지친>');
         else if (char.health >= 70) titles.push('<쌩쌩한>');
-        return titles.length > 0 ? titles.join(' ') + ' ' : '';
+        return titles.length > 0 ? titles.join(' ') : '';
     }
 
     function getStatusImage(char) {
@@ -202,11 +215,14 @@ document.addEventListener('DOMContentLoaded', () => {
             charCard.className = `character-card ${statusClass}`;
             charCard.id = `char-${char.id}`;
             const currentImg = getStatusImage(char);
-            const fullDisplayName = getCharacterTitle(char) + char.name;
+            const titleStr = getCharacterTitle(char);
 
             charCard.innerHTML = `
                 <div class="card-header">
-                    <h3 class="character-name">${fullDisplayName}</h3>
+                    <h3 class="character-name">
+                        <span class="titles">${titleStr}</span>
+                        <span class="name">${char.name}</span>
+                    </h3>
                     <span class="status-icon">${getStatusIcons(char)}</span>
                 </div>
                 <div class="character-img-container">
@@ -240,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const imgElement = card.querySelector('.character-avatar');
         if (imgElement.src.indexOf(currentImg) === -1) imgElement.src = currentImg;
 
-        card.querySelector('.character-name').textContent = getCharacterTitle(char) + char.name;
+        card.querySelector('.titles').textContent = getCharacterTitle(char);
         card.querySelector('.health-bar').style.width = `${char.health}%`;
         card.querySelector('.health-val').textContent = char.health;
         card.querySelector('.satiety-bar').style.width = `${char.satiety}%`;
@@ -385,7 +401,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 codeOutput.scrollTop = codeOutput.scrollHeight;
             }
-            // 최종 리액션 추가
             const endDiv = document.createElement('div');
             endDiv.className = 'code-line cinnamoroll-reaction';
             endDiv.textContent = `시나모롤: "코딩 끝! 모두에게 좋은 일이 생겼길 바라요! (´,,•ω•,,)♡"`;
@@ -398,6 +413,14 @@ document.addEventListener('DOMContentLoaded', () => {
             isProcessing = false;
             updateChanceUI();
         }
+    }
+
+    function broadcastMessage(msg) {
+        const div = document.createElement('div');
+        div.className = 'code-line broadcast';
+        div.textContent = `📢 ${msg}`;
+        codeOutput.appendChild(div);
+        codeOutput.scrollTop = codeOutput.scrollHeight;
     }
 
     codeButton.addEventListener('click', processCoding);

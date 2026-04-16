@@ -284,9 +284,26 @@ h2 {
 
 .character-card.exhausted { opacity: 0.5; filter: grayscale(40%); }
 
-.card-header { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.character-name { font-size: 1.1em; font-weight: 700; color: #5d9cec; margin: 0; }
-.status-icon { font-size: 1.2em; }
+.card-header { width: 100%; display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.character-name { 
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    gap: 2px;
+    margin: 0;
+}
+.character-name .titles {
+    font-size: 0.7em;
+    color: #ed64a6;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.character-name .name {
+    font-size: 1.1em;
+    font-weight: 700;
+    color: #5d9cec;
+}
+.status-icon { font-size: 1.2em; margin-top: 5px; }
 
 .character-img-container {
     width: 100%;

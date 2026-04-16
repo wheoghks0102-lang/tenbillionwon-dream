@@ -180,13 +180,6 @@ h2 {
 
 .money-status { font-size: 0.95em; font-weight: 700; color: #48bb78; margin-top: 10px; text-align: center; background: #f0fff4; padding: 5px 15px; border-radius: 10px; width: 100%; box-sizing: border-box; }
 
-@keyframes wealthy-animation {
-    0% { border-color: #ffd700; box-shadow: 0 0 10px #ffd700; transform: scale(1); }
-    50% { border-color: #ff4500; box-shadow: 0 0 25px #ff4500; transform: scale(1.03); }
-    100% { border-color: #ffd700; box-shadow: 0 0 10px #ffd700; transform: scale(1); }
-}
-.wealthy-glow { animation: wealthy-animation 1s infinite; background: linear-gradient(135deg, #ffffff 0%, #fff9c4 100%); }
-
 .pulse-gain { animation: pulse-gain 0.6s ease-out; }
 .pulse-loss { animation: pulse-loss 0.6s ease-out; }
 @keyframes pulse-gain { 0% { transform: scale(1); } 50% { transform: scale(1.02); box-shadow: 0 0 15px rgba(72, 187, 120, 0.5); } 100% { transform: scale(1); } }

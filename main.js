@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const MAX_SATIETY = 100;
 
     // Audio files can sometimes cause loading issues if the CDN is slow.
-    // We'll create them but not let them block anything.
     const sounds = {
         gain: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'),
         loss: new Audio('https://assets.mixkit.co/active_storage/sfx/2014/2014-preview.mp3')
@@ -60,8 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
         characters.forEach(char => {
             const charCard = document.createElement('div');
             const statusClass = char.health <= 0 ? 'exhausted' : '';
-            const wealthyClass = char.money >= 10000 ? 'wealthy-glow' : '';
-            charCard.className = `character-card ${wealthyClass} ${statusClass}`;
+            charCard.className = `character-card ${statusClass}`;
             charCard.id = `char-${char.id}`;
 
             const currentImg = getStatusImage(char);
@@ -117,7 +115,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const card = document.getElementById(`char-${char.id}`);
         if (!char || !card) return;
         
-        // 이미지 업데이트 (모든 캐릭터 적용)
         const currentImg = getStatusImage(char);
         const imgElement = card.querySelector('.character-avatar');
         if (imgElement.src.indexOf(currentImg) === -1) {
@@ -132,23 +129,21 @@ document.addEventListener('DOMContentLoaded', () => {
         card.querySelector('.status-icon').textContent = getStatusIcons(char);
         if (char.health <= 0) card.classList.add('exhausted');
         else card.classList.remove('exhausted');
-        if (char.money >= 10000) card.classList.add('wealthy-glow');
-        else card.classList.remove('wealthy-glow');
     }
 
     const events = [
         { 
             type: 'negative', name: '오늘 저녁 쏜다!',
             code: (c1) => `${c1.name}.결제(전체_저녁값);`,
-            desc: (c1) => `👉 ${c1.name}님이 오늘 저녁을 쐈습니다! 통장은 비었지만 모두가 행복합니다.`,
+            desc: (c1) => `👉 ${c1.name}님이 오늘 저녁을 쐈습니다! 통장은 조금 가벼워졌지만 모두가 행복합니다.`,
             action: (c1) => { 
-                c1.money = Math.max(0, c1.money - 50000);
+                c1.money = Math.max(0, c1.money - 6000); // 50000 -> 6000
                 animateCharacter(c1.id, 'loss'); updateCharacterUI(c1);
                 characters.filter(c => c.id !== c1.id).forEach(c => {
                     c.satiety = Math.min(MAX_SATIETY, c.satiety + 15);
                     animateCharacter(c.id, 'gain'); updateCharacterUI(c);
                 });
-                return `[${c1.name}: 재산 -50,000 / 나머지: 포만감 +15]`;
+                return `[${c1.name}: 재산 -6,000 / 나머지: 포만감 +15]`;
             }
         },
         {
@@ -167,11 +162,11 @@ document.addEventListener('DOMContentLoaded', () => {
             desc: (c1, c2, c3) => `👉 세 분이서 공동 구매에 성공했습니다! 저렴하게 맛있는 걸 먹었네요.`,
             action: (c1, c2, c3) => {
                 [c1, c2, c3].forEach(c => {
-                    c.money = Math.max(0, c.money - 8000);
+                    c.money = Math.max(0, c.money - 2000); // 8000 -> 2000
                     c.satiety = Math.min(MAX_SATIETY, c.satiety + 15);
                     animateCharacter(c.id, 'gain'); updateCharacterUI(c);
                 });
-                return `[${c1.name},${c2.name},${c3.name}: 재산 -8,000, 포만감 +15]`;
+                return `[${c1.name},${c2.name},${c3.name}: 재산 -2,000, 포만감 +15]`;
             }
         },
         {
@@ -199,9 +194,10 @@ document.addEventListener('DOMContentLoaded', () => {
             code: (c1) => `if (${c1.name}.낚시 == "월척") { ${c1.name}.회_파티(); }`,
             desc: (c1) => `👉 대박! ${c1.name}님이 전설의 물고기를 잡았습니다. 재산과 포만감이 상승! 🎣`,
             action: (c1) => {
-                c1.money += 15000; c1.satiety = Math.min(MAX_SATIETY, c1.satiety + 10);
+                c1.money += 8000; // 15000 -> 8000
+                c1.satiety = Math.min(MAX_SATIETY, c1.satiety + 10);
                 animateCharacter(c1.id, 'gain'); updateCharacterUI(c1);
-                return `[${c1.name}: 재산 +15,000, 포만감 +10]`;
+                return `[${c1.name}: 재산 +8,000, 포만감 +10]`;
             }
         },
         {
@@ -210,9 +206,9 @@ document.addEventListener('DOMContentLoaded', () => {
             desc: (c1) => `👉 ${c1.name}님의 홈바 오픈! 기분이 좋아 체력이 오르지만 돈을 썼습니다.`,
             action: (c1) => {
                 c1.health = Math.min(MAX_HEALTH, c1.health + 10);
-                c1.money = Math.max(0, c1.money - 10000);
+                c1.money = Math.max(0, c1.money - 3000); // 10000 -> 3000
                 animateCharacter(c1.id, 'gain'); updateCharacterUI(c1);
-                return `[${c1.name}: 체력 +10, 재산 -10,000]`;
+                return `[${c1.name}: 체력 +10, 재산 -3,000]`;
             }
         },
         {
@@ -221,9 +217,9 @@ document.addEventListener('DOMContentLoaded', () => {
             desc: (c1) => `👉 ${c1.name}님이 공부에 집중합니다. 피곤하지만 장학금을 기대해 봅니다.`,
             action: (c1) => {
                 c1.health = Math.max(0, c1.health - 15);
-                c1.money += 5000;
+                c1.money += 4000; // 5000 -> 4000
                 animateCharacter(c1.id, 'loss'); updateCharacterUI(c1);
-                return `[${c1.name}: 체력 -15, 재산 +5,000]`;
+                return `[${c1.name}: 체력 -15, 재산 +4,000]`;
             }
         },
         {
@@ -239,11 +235,11 @@ document.addEventListener('DOMContentLoaded', () => {
         {
             type: 'positive', name: '복권 당첨 버그',
             code: (c1) => `system.money_glitch(${c1.name});`,
-            desc: (c1) => `👉 축하합니다! ${c1.name}님에게 복권 당첨 버그가 발생했습니다! 럭키! 🍀`,
+            desc: (c1) => `👉 축하합니다! ${c1.name}님에게 소소한 복권 당첨 버그가 발생했습니다! 럭키! 🍀`,
             action: (c1) => { 
-                c1.money += 50000;
+                c1.money += 12000; // 50000 -> 12000
                 animateCharacter(c1.id, 'gain'); updateCharacterUI(c1); 
-                return `[${c1.name}: 재산 +50,000]`;
+                return `[${c1.name}: 재산 +12,000]`;
             }
         },
         {
@@ -263,6 +259,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 c1.satiety = 0; 
                 animateCharacter(c1.id, 'loss'); updateCharacterUI(c1); 
                 return `[${c1.name}: 포만감 0으로 초기화]`;
+            }
+        },
+        {
+            type: 'positive', name: '용돈 발견',
+            code: (c1) => `Pocket.search(${c1.name}).result = 2000;`,
+            desc: (c1) => `👉 ${c1.name}님이 옷 주머니에서 잊고 있던 2천원을 발견했습니다!`,
+            action: (c1) => { 
+                c1.money += 2000;
+                animateCharacter(c1.id, 'gain'); updateCharacterUI(c1); 
+                return `[${c1.name}: 재산 +2,000]`;
             }
         }
     ];

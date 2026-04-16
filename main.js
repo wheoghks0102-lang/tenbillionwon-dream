@@ -2,12 +2,12 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Cinnamoroll Game Initializing...');
 
     let characters = [
-        { id: 1, name: '심우성', img: 'sim.png', health: 50, satiety: 50, money: 1000, heightRank: 1 },
-        { id: 2, name: '채의진', img: 'chae.png', health: 50, satiety: 50, money: 1000, heightRank: 4 },
-        { id: 3, name: '조윤혜', img: 'yoon.png', health: 50, satiety: 50, money: 1000, heightRank: 5 },
-        { id: 4, name: '조대환', img: 'jo.png', health: 50, satiety: 50, money: 1000, heightRank: 2 },
-        { id: 5, name: '최준', img: 'choi.png', health: 50, satiety: 50, money: 1000, heightRank: 3 },
-        { id: 6, name: '전유희', img: 'jeon.png', health: 50, satiety: 50, money: 1000, heightRank: 3 },
+        { id: 1, name: '심우성', prefix: 'sim', img: 'sim.png', health: 50, satiety: 50, money: 10000, heightRank: 1 },
+        { id: 2, name: '채의진', prefix: 'chae', img: 'chae.png', health: 50, satiety: 50, money: 10000, heightRank: 4 },
+        { id: 3, name: '조윤혜', prefix: 'yoon', img: 'yoon.png', health: 50, satiety: 50, money: 10000, heightRank: 5 },
+        { id: 4, name: '조대환', prefix: 'jo', img: 'jo.png', health: 50, satiety: 50, money: 10000, heightRank: 2 },
+        { id: 5, name: '최준', prefix: 'choi', img: 'choi.png', health: 50, satiety: 50, money: 10000, heightRank: 3 },
+        { id: 6, name: '전유희', prefix: 'jeon', img: 'jeon.png', health: 50, satiety: 50, money: 10000, heightRank: 3 },
     ];
 
     const MAX_HEALTH = 100;
@@ -44,6 +44,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return icons;
     }
 
+    function getStatusImage(char) {
+        const prefix = char.prefix;
+        if (char.money >= 30000) return `${prefix}_돈많은.png`;
+        if (char.money <= 5000) return `${prefix}_돈없는.png`;
+        if (char.satiety <= 30) return `${prefix}_배고픈.png`;
+        if (char.satiety >= 70) return `${prefix}_배부른.png`;
+        if (char.health <= 30) return `${prefix}_체력없는.png`;
+        if (char.health >= 70) return `${prefix}_체력많은.png`;
+        return char.img;
+    }
+
     function renderCharacters() {
         characterGrid.innerHTML = '';
         characters.forEach(char => {
@@ -53,17 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
             charCard.className = `character-card ${wealthyClass} ${statusClass}`;
             charCard.id = `char-${char.id}`;
 
-            // 이미지 결정 로직 (조대환 캐릭터 전용)
-            let currentImg = char.img;
-            if (char.id === 4) { // 조대환의 ID가 4임
-                if (char.money >= 30000) currentImg = 'jo_돈많은.png';
-                else if (char.money <= 5000) currentImg = 'jo_돈없는.png';
-                else if (char.satiety <= 30) currentImg = 'jo_배고픈.png';
-                else if (char.satiety >= 70) currentImg = 'jo_배부른.png';
-                else if (char.health <= 30) currentImg = 'jo_체력없는.png';
-                else if (char.health >= 70) currentImg = 'jo_체력많은.png';
-                else currentImg = 'jo.png';
-            }
+            const currentImg = getStatusImage(char);
 
             charCard.innerHTML = `
                 <div class="card-header">
@@ -116,21 +117,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const card = document.getElementById(`char-${char.id}`);
         if (!char || !card) return;
         
-        // 이미지 업데이트 (조대환 캐릭터 전용)
-        if (char.id === 4) {
-            let currentImg = char.img;
-            if (char.money >= 30000) currentImg = 'jo_돈많은.png';
-            else if (char.money <= 5000) currentImg = 'jo_돈없는.png';
-            else if (char.satiety <= 30) currentImg = 'jo_배고픈.png';
-            else if (char.satiety >= 70) currentImg = 'jo_배부른.png';
-            else if (char.health <= 30) currentImg = 'jo_체력없는.png';
-            else if (char.health >= 70) currentImg = 'jo_체력많은.png';
-            else currentImg = 'jo.png';
-            
-            const imgElement = card.querySelector('.character-avatar');
-            if (imgElement.src.indexOf(currentImg) === -1) {
-                imgElement.src = currentImg;
-            }
+        // 이미지 업데이트 (모든 캐릭터 적용)
+        const currentImg = getStatusImage(char);
+        const imgElement = card.querySelector('.character-avatar');
+        if (imgElement.src.indexOf(currentImg) === -1) {
+            imgElement.src = currentImg;
         }
 
         card.querySelector('.health-bar').style.width = `${char.health}%`;

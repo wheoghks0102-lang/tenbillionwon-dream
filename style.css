@@ -155,18 +155,11 @@ h2 {
 }
 
 .character-avatar {
-    transition: transform 0.3s ease, height 0.3s ease;
+    transition: all 0.3s ease;
     object-fit: contain;
-    width: auto;
+    width: 100%;
+    height: 100%;
 }
-
-/* 캐릭터별 정밀 크기 조절 */
-#char-1 .character-avatar { height: 100%; } /* 심우성: 화면에 딱 맞게 */
-#char-4 .character-avatar { height: 100%; } /* 조대환: 꽉 차게 */
-#char-6 .character-avatar { height: 105%; } /* 전유희: 꽉 차게 (여성) */
-#char-2 .character-avatar { height: 103%; } /* 채의진: 꽉 차게 (여성) */
-#char-3 .character-avatar { height: 102%; } /* 조윤혜: 꽉 차게 (여성) */
-#char-5 .character-avatar { height: 88%; }  /* 최준: 살짝 널널하게 */
 
 .character-card:hover .character-avatar { transform: scale(1.05); }
 

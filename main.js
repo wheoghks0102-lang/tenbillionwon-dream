@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Online Cinnamoroll Game Initializing...');
 
-    // Gun.js Initialization - Version v2 for global reset
+    // Gun.js Initialization - Version v2
     const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
     const world = gun.get('cinnamoroll-world-v2');
 
@@ -42,13 +42,14 @@ document.addEventListener('DOMContentLoaded', () => {
         titleClickCount++;
         if (titleClickCount === 15) {
             titleClickCount = 0;
-            if (confirm('모든 캐릭터의 상태를 초기화할까요? (전체 유저 공유)')) {
+            if (confirm('모든 캐릭터의 상태와 활동 로그를 초기화할까요? (전체 유저 공유)')) {
                 resetAllSharedStates();
             }
         }
     });
 
     function resetAllSharedStates() {
+        // 1. 캐릭터 상태 리셋
         INITIAL_CHARACTERS.forEach(char => {
             world.get(`char_${char.id}`).put({
                 health: char.health,
@@ -56,7 +57,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 money: char.money
             });
         });
-        broadcastMessage(`시스템: 모든 캐릭터의 상태가 초기화되었습니다! ✨`);
+        
+        // 2. 활동 로그 리셋 신호 전송
+        world.get('reset_logs_trigger').put({
+            time: Date.now(),
+            by: myNickname
+        });
+
+        broadcastMessage(`시스템: 모든 데이터가 초기화되었습니다! ✨`);
     }
 
     // Login Logic
@@ -143,6 +151,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 addHistoryItem(data.user);
             }
         });
+
+        // 활동 로그 리셋 리스너
+        world.get('reset_logs_trigger').on(data => {
+            if (data) {
+                clearHistoryUI();
+            }
+        });
     }
 
     function syncCharacter(char) {
@@ -173,6 +188,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (attemptHistory.children.length > 20) {
             attemptHistory.removeChild(attemptHistory.lastChild);
         }
+    }
+
+    function clearHistoryUI() {
+        attemptHistory.innerHTML = '<p class="history-item empty">데이터가 초기화되었습니다.</p>';
     }
 
     function getStatusIcons(char) {

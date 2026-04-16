@@ -148,7 +148,6 @@ h2 {
     border-radius: 15px;
     overflow: hidden;
     margin-bottom: 12px;
-    background-color: #f8fafc;
     border: 1px solid #e2e8f0;
     display: flex;
     justify-content: center;
@@ -157,16 +156,15 @@ h2 {
 
 .character-avatar {
     transition: transform 0.3s ease, height 0.3s ease;
-    background-color: #ffffff;
     object-fit: contain;
 }
 
-/* 키 고증을 위한 이미지 크기 조절 */
+/* 키 고증을 위한 이미지 크기 조절 (더 미세하게 조정) */
 .height-rank-1 .character-avatar { height: 100%; width: auto; }
-.height-rank-2 .character-avatar { height: 90%; width: auto; }
-.height-rank-3 .character-avatar { height: 82%; width: auto; }
-.height-rank-4 .character-avatar { height: 74%; width: auto; }
-.height-rank-5 .character-avatar { height: 66%; width: auto; }
+.height-rank-2 .character-avatar { height: 98%; width: auto; }
+.height-rank-3 .character-avatar { height: 96%; width: auto; }
+.height-rank-4 .character-avatar { height: 94%; width: auto; }
+.height-rank-5 .character-avatar { height: 92%; width: auto; }
 
 .character-card:hover .character-avatar { transform: scale(1.05); }
 

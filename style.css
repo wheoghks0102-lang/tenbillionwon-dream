@@ -150,13 +150,17 @@ h2 {
     margin-bottom: 12px;
     background-color: #f8fafc;
     border: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .character-avatar {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     transition: transform 0.3s ease;
+    background-color: #ffffff;
 }
 
 .character-card:hover .character-avatar { transform: scale(1.05); }

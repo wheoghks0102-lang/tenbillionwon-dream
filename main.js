@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('Cinnamoroll Game Initializing...');
+
     let characters = [
         { id: 1, name: '심우성', img: 'sim.png', health: 50, satiety: 50, money: 1000 },
         { id: 2, name: '채의진', img: 'chae.png', health: 50, satiety: 50, money: 1000 },
@@ -11,16 +13,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const MAX_HEALTH = 100;
     const MAX_SATIETY = 100;
 
+    // Audio files can sometimes cause loading issues if the CDN is slow.
+    // We'll create them but not let them block anything.
     const sounds = {
         gain: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'),
         loss: new Audio('https://assets.mixkit.co/active_storage/sfx/2014/2014-preview.mp3')
     };
     
-    Object.values(sounds).forEach(s => s.volume = 0.15);
+    Object.values(sounds).forEach(s => {
+        s.volume = 0.15;
+        s.onerror = () => console.warn('Failed to load sound:', s.src);
+    });
 
     const characterGrid = document.getElementById('character-grid');
     const codeOutput = document.getElementById('code-output');
     const codeButton = document.getElementById('code-button');
+
+    if (!characterGrid || !codeOutput || !codeButton) {
+        console.error('Required DOM elements not found!');
+        return;
+    }
 
     function getStatusIcons(char) {
         let icons = '';
@@ -46,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="status-icon">${getStatusIcons(char)}</span>
                 </div>
                 <div class="character-img-container">
-                    <img src="${char.img}" alt="${char.name}" class="character-avatar" onerror="this.src='https://via.placeholder.com/150?text=${char.name}'">
+                    <img src="${char.img}" alt="${char.name}" class="character-avatar" onerror="this.src='https://via.placeholder.com/150?text=${encodeURIComponent(char.name)}'">
                 </div>
                 <div class="status-bar-container">
                     <div class="status-label-group">
@@ -70,6 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             characterGrid.appendChild(charCard);
         });
+        console.log('Characters rendered');
     }
 
     function animateCharacter(charId, type) {
@@ -78,8 +91,12 @@ document.addEventListener('DOMContentLoaded', () => {
         card.classList.remove('pulse-gain', 'pulse-loss');
         void card.offsetWidth; 
         card.classList.add(type === 'gain' ? 'pulse-gain' : 'pulse-loss');
-        if (type === 'gain') sounds.gain.play().catch(e => {});
-        else sounds.loss.play().catch(e => {});
+        
+        const sound = type === 'gain' ? sounds.gain : sounds.loss;
+        if (sound && sound.readyState >= 2) {
+            sound.currentTime = 0;
+            sound.play().catch(e => {});
+        }
     }
 
     function updateCharacterUI(char) {
@@ -247,56 +264,66 @@ document.addEventListener('DOMContentLoaded', () => {
         const resultCount = Math.floor(Math.random() * 3) + 4;
         const availableEvents = [...events];
 
-        for (let i = 1; i <= resultCount; i++) {
+        try {
+            for (let i = 1; i <= resultCount; i++) {
+                await new Promise(r => setTimeout(r, 1000));
+                const eventIndex = Math.floor(Math.random() * availableEvents.length);
+                const event = availableEvents[eventIndex];
+                if (availableEvents.length > 5) availableEvents.splice(eventIndex, 1);
+
+                const c1 = characters[Math.floor(Math.random() * characters.length)];
+                const others = characters.filter(c => c.id !== c1.id);
+                const c2 = others[Math.floor(Math.random() * others.length)];
+                const others2 = others.filter(c => c.id !== c2.id);
+                const c3 = others2[Math.floor(Math.random() * others2.length)];
+
+                const codeDiv = document.createElement('div');
+                codeDiv.className = `code-line ${event.type}`;
+                codeDiv.textContent = `> ${event.code(c1, c2, c3)}`;
+                codeOutput.appendChild(codeDiv);
+                codeOutput.scrollTop = codeOutput.scrollHeight;
+
+                await new Promise(r => setTimeout(r, 1000));
+
+                const descDiv = document.createElement('div');
+                descDiv.className = 'code-line result-text';
+                descDiv.textContent = event.desc(c1, c2, c3);
+                codeOutput.appendChild(descDiv);
+                
+                const summary = event.action(c1, c2, c3);
+                const summaryDiv = document.createElement('div');
+                summaryDiv.className = 'code-line comment summary-line';
+                summaryDiv.textContent = `// ${summary}`;
+                codeOutput.appendChild(summaryDiv);
+
+                codeOutput.scrollTop = codeOutput.scrollHeight;
+                await new Promise(r => setTimeout(r, 500));
+            }
+
             await new Promise(r => setTimeout(r, 1000));
-            const eventIndex = Math.floor(Math.random() * availableEvents.length);
-            const event = availableEvents[eventIndex];
-            if (availableEvents.length > 5) availableEvents.splice(eventIndex, 1);
+            const reactDiv = document.createElement('div');
+            reactDiv.className = 'code-line cinnamoroll-reaction';
+            reactDiv.textContent = `시나모롤: "${reactions[Math.floor(Math.random() * reactions.length)]}"`;
+            codeOutput.appendChild(reactDiv);
 
-            const c1 = characters[Math.floor(Math.random() * characters.length)];
-            const others = characters.filter(c => c.id !== c1.id);
-            const c2 = others[Math.floor(Math.random() * others.length)];
-            const c3 = others.filter(c => c.id !== c2.id)[Math.floor(Math.random() * (others.length - 1))];
-
-            const codeDiv = document.createElement('div');
-            codeDiv.className = `code-line ${event.type}`;
-            codeDiv.textContent = `> ${event.code(c1, c2, c3)}`;
-            codeOutput.appendChild(codeDiv);
+            const endDiv = document.createElement('div');
+            endDiv.className = 'code-line comment';
+            endDiv.textContent = `// 코딩 종료! ✨`;
+            codeOutput.appendChild(endDiv);
             codeOutput.scrollTop = codeOutput.scrollHeight;
-
-            await new Promise(r => setTimeout(r, 1000));
-
-            const descDiv = document.createElement('div');
-            descDiv.className = 'code-line result-text';
-            descDiv.textContent = event.desc(c1, c2, c3);
-            codeOutput.appendChild(descDiv);
-            
-            const summary = event.action(c1, c2, c3);
-            const summaryDiv = document.createElement('div');
-            summaryDiv.className = 'code-line comment summary-line';
-            summaryDiv.textContent = `// ${summary}`;
-            codeOutput.appendChild(summaryDiv);
-
-            codeOutput.scrollTop = codeOutput.scrollHeight;
-            await new Promise(r => setTimeout(r, 500));
+        } catch (error) {
+            console.error('Error during coding process:', error);
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'code-line negative';
+            errorDiv.textContent = `> 에러 발생: ${error.message}`;
+            codeOutput.appendChild(errorDiv);
+        } finally {
+            isProcessing = false;
+            codeButton.disabled = false;
         }
-
-        await new Promise(r => setTimeout(r, 1000));
-        const reactDiv = document.createElement('div');
-        reactDiv.className = 'code-line cinnamoroll-reaction';
-        reactDiv.textContent = `시나모롤: "${reactions[Math.floor(Math.random() * reactions.length)]}"`;
-        codeOutput.appendChild(reactDiv);
-
-        const endDiv = document.createElement('div');
-        endDiv.className = 'code-line comment';
-        endDiv.textContent = `// 코딩 종료! ✨`;
-        codeOutput.appendChild(endDiv);
-        codeOutput.scrollTop = codeOutput.scrollHeight;
-
-        isProcessing = false;
-        codeButton.disabled = false;
     }
 
     codeButton.addEventListener('click', processCoding);
     renderCharacters();
+    console.log('Initialization complete');
 });

@@ -43,6 +43,21 @@ document.addEventListener('DOMContentLoaded', () => {
         return icons;
     }
 
+    function getCharacterTitle(char) {
+        let titles = [];
+        
+        if (char.money <= 5000) titles.push('그지');
+        else if (char.money >= 30000) titles.push('부자');
+        
+        if (char.satiety <= 30) titles.push('굶주린');
+        else if (char.satiety >= 70) titles.push('배부른');
+        
+        if (char.health <= 30) titles.push('지친');
+        else if (char.health >= 70) titles.push('쌩쌩한');
+        
+        return titles.length > 0 ? titles.join(' ') + ' ' : '';
+    }
+
     function getStatusImage(char) {
         const prefix = char.prefix;
         if (char.money >= 30000) return `${prefix}_돈많은.png`;
@@ -63,10 +78,11 @@ document.addEventListener('DOMContentLoaded', () => {
             charCard.id = `char-${char.id}`;
 
             const currentImg = getStatusImage(char);
+            const fullDisplayName = getCharacterTitle(char) + char.name;
 
             charCard.innerHTML = `
                 <div class="card-header">
-                    <h3 class="character-name">${char.name}</h3>
+                    <h3 class="character-name">${fullDisplayName}</h3>
                     <span class="status-icon">${getStatusIcons(char)}</span>
                 </div>
                 <div class="character-img-container">
@@ -120,6 +136,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (imgElement.src.indexOf(currentImg) === -1) {
             imgElement.src = currentImg;
         }
+
+        const fullDisplayName = getCharacterTitle(char) + char.name;
+        card.querySelector('.character-name').textContent = fullDisplayName;
 
         card.querySelector('.health-bar').style.width = `${char.health}%`;
         card.querySelector('.health-val').textContent = char.health;

@@ -34,7 +34,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const codeOutput = document.getElementById('code-output');
     const codeButton = document.getElementById('code-button');
     const attemptHistory = document.getElementById('attempt-history');
+    const onlineUsersList = document.getElementById('online-users-list');
     const titleH1 = document.querySelector('header h1');
+
+    // Online Users Tracking
+    let activeUsers = {};
+
+    function updateOnlineUsersUI() {
+        const now = Date.now();
+        const onlineNicknames = Object.keys(activeUsers).filter(nick => {
+            // 1분 이내에 활동이 있었던 유저만 온라인으로 간주 (Gun.js 서버리스 특성상 하트비트 필요)
+            return (now - activeUsers[nick]) < 60000;
+        });
+        
+        if (onlineNicknames.length === 0) {
+            onlineUsersList.textContent = '나 홀로 마을에...';
+        } else {
+            onlineUsersList.textContent = onlineNicknames.join(', ');
+        }
+    }
+
+    function heartbeat() {
+        if (myNickname) {
+            world.get('presence').get(myNickname).put(Date.now());
+        }
+    }
 
     // Easter Egg Logic
     let titleClickCount = 0;
@@ -49,7 +73,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function resetAllSharedStates() {
-        // 1. 캐릭터 상태 리셋
         INITIAL_CHARACTERS.forEach(char => {
             world.get(`char_${char.id}`).put({
                 health: char.health,
@@ -57,13 +80,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 money: char.money
             });
         });
-        
-        // 2. 활동 로그 리셋 신호 전송
         world.get('reset_logs_trigger').put({
             time: Date.now(),
             by: myNickname
         });
-
         broadcastMessage(`시스템: 모든 데이터가 초기화되었습니다! ✨`);
     }
 
@@ -75,8 +95,18 @@ document.addEventListener('DOMContentLoaded', () => {
             loginOverlay.style.display = 'none';
             appContainer.style.display = 'block';
             myNicknameSpan.textContent = myNickname;
+            
             initSharedState();
             checkDailyChances();
+            
+            // 접속 사실 알리기
+            world.get('join_event').put({
+                user: myNickname,
+                time: Date.now()
+            });
+            
+            heartbeat();
+            setInterval(heartbeat, 30000); // 30초마다 하트비트
         } else {
             alert('닉네임을 입력해주세요!');
         }
@@ -89,7 +119,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (stored) {
             const data = JSON.parse(stored);
             const timeDiff = now - data.lastTime;
-            
             if (timeDiff >= 24 * 60 * 60 * 1000) {
                 dailyChances = 3;
             } else {
@@ -135,6 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Shared State Logic
     function initSharedState() {
+        // 1. 캐릭터 상태 동기화
         characters.forEach(char => {
             world.get(`char_${char.id}`).on(data => {
                 if (data) {
@@ -146,13 +176,30 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
+        // 2. 코딩 시도 로그 동기화
         world.get('last_attempt').on(data => {
             if (data && data.user) {
-                addHistoryItem(data.user);
+                addHistoryItem(data.user, '시도');
             }
         });
 
-        // 활동 로그 리셋 리스너
+        // 3. 유저 접속 로그 동기화
+        world.get('join_event').on(data => {
+            if (data && data.user) {
+                addHistoryItem(data.user, '접속');
+            }
+        });
+
+        // 4. 실시간 접속자 추적
+        world.get('presence').map().on((time, nick) => {
+            if (time && nick) {
+                activeUsers[nick] = time;
+                updateOnlineUsersUI();
+            }
+        });
+        setInterval(updateOnlineUsersUI, 10000); // 10초마다 UI 갱신 (오프라인 체크)
+
+        // 5. 초기화 리스너
         world.get('reset_logs_trigger').on(data => {
             if (data) {
                 clearHistoryUI();
@@ -175,17 +222,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function addHistoryItem(user) {
+    function addHistoryItem(user, type) {
         const emptyMsg = attemptHistory.querySelector('.empty');
         if (emptyMsg) emptyMsg.remove();
 
         const div = document.createElement('div');
         div.className = 'history-item';
         const time = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-        div.innerHTML = `<strong>[${time}]</strong> ${user}님이 코딩을 시도했습니다!`;
+        
+        if (type === '접속') {
+            div.style.background = '#f0fff4';
+            div.style.borderColor = '#48bb78';
+            div.innerHTML = `<strong>[${time}]</strong> 🌟 <b>${user}</b>님이 마을에 입성했습니다!`;
+        } else {
+            div.innerHTML = `<strong>[${time}]</strong> 💻 ${user}님이 코딩을 시도했습니다!`;
+        }
         
         attemptHistory.prepend(div);
-        if (attemptHistory.children.length > 20) {
+        if (attemptHistory.children.length > 30) {
             attemptHistory.removeChild(attemptHistory.lastChild);
         }
     }

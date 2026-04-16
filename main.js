@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateOnlineUsersUI() {
         const now = Date.now();
         const onlineNicknames = Object.keys(activeUsers).filter(nick => {
-            // 1분 이내에 활동이 있었던 유저만 온라인으로 간주 (Gun.js 서버리스 특성상 하트비트 필요)
+            // 1분 이내에 활동이 있었던 유저만 온라인으로 간주
             return (now - activeUsers[nick]) < 60000;
         });
         
@@ -80,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 money: char.money
             });
         });
+        // 로그 초기화는 데이터 구조상 복잡하므로 트리거만 보냄
         world.get('reset_logs_trigger').put({
             time: Date.now(),
             by: myNickname
@@ -97,13 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
             myNicknameSpan.textContent = myNickname;
             
             initSharedState();
-            checkDailyChances();
             
-            // 접속 사실 알리기
-            world.get('join_event').put({
-                user: myNickname,
-                time: Date.now()
-            });
+            // 접속 로그 기록
+            logActivity(myNickname, '접속');
             
             heartbeat();
             setInterval(heartbeat, 30000); // 30초마다 하트비트
@@ -112,55 +109,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Daily Chance Logic
-    function checkDailyChances() {
-        const stored = localStorage.getItem(`coding_chances_${myNickname}`);
-        const now = Date.now();
-        if (stored) {
-            const data = JSON.parse(stored);
-            const timeDiff = now - data.lastTime;
-            if (timeDiff >= 24 * 60 * 60 * 1000) {
-                dailyChances = 3;
-            } else {
-                dailyChances = data.count;
-                lastCodingTime = data.lastTime;
-            }
-        } else {
-            dailyChances = 3;
+    // Logout Logic
+    window.addEventListener('beforeunload', () => {
+        if (myNickname) {
+            logActivity(myNickname, '퇴장');
+            // Presence 즉시 업데이트 (선택 사항)
+            world.get('presence').get(myNickname).put(0);
         }
-        updateChanceUI();
-    }
-
-    function updateChanceUI() {
-        chanceCountSpan.textContent = dailyChances;
-        if (dailyChances <= 0) {
-            const now = Date.now();
-            const remaining = 24 * 60 * 60 * 1000 - (now - lastCodingTime);
-            if (remaining > 0) {
-                const hours = Math.ceil(remaining / (1000 * 60 * 60));
-                codeButton.disabled = true;
-                codeButton.textContent = `${hours}시간 뒤 시킬 수 있어요!`;
-            } else {
-                dailyChances = 3;
-                codeButton.disabled = false;
-                codeButton.textContent = `시나모롤에게 코딩 시키기! ✨`;
-                updateChanceUI();
-            }
-        } else {
-            codeButton.disabled = false;
-            codeButton.textContent = `시나모롤에게 코딩 시키기! ✨`;
-        }
-    }
-
-    function useChance() {
-        dailyChances--;
-        lastCodingTime = Date.now();
-        localStorage.setItem(`coding_chances_${myNickname}`, JSON.stringify({
-            count: dailyChances,
-            lastTime: lastCodingTime
-        }));
-        updateChanceUI();
-    }
+    });
 
     // Shared State Logic
     function initSharedState() {
@@ -176,28 +132,40 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // 2. 코딩 시도 로그 동기화
-        world.get('last_attempt').on(data => {
-            if (data && data.user) {
-                addHistoryItem(data.user, '시도');
+        // 2. 활동 로그 동기화 (과거 이력 포함)
+        world.get('activity_logs').map().on((data, id) => {
+            if (data && data.user && data.type) {
+                addHistoryItem(data.user, data.type, data.time, id);
             }
         });
 
-        // 3. 유저 접속 로그 동기화
-        world.get('join_event').on(data => {
-            if (data && data.user) {
-                addHistoryItem(data.user, '접속');
-            }
-        });
-
-        // 4. 실시간 접속자 추적
+        // 3. 실시간 접속자 추적
         world.get('presence').map().on((time, nick) => {
-            if (time && nick) {
-                activeUsers[nick] = time;
+            if (nick) {
+                if (time && time > 0) {
+                    activeUsers[nick] = time;
+                } else {
+                    delete activeUsers[nick];
+                }
                 updateOnlineUsersUI();
             }
         });
-        setInterval(updateOnlineUsersUI, 10000); // 10초마다 UI 갱신 (오프라인 체크)
+        setInterval(updateOnlineUsersUI, 10000);
+
+        // 4. 기회(Chances) 동기화
+        world.get('users').get(myNickname).on(data => {
+            if (data) {
+                dailyChances = data.chances ?? 3;
+                lastCodingTime = data.lastTime ?? 0;
+            } else {
+                // 데이터가 없으면 초기화
+                world.get('users').get(myNickname).put({
+                    chances: 3,
+                    lastTime: 0
+                });
+            }
+            updateChanceUI();
+        });
 
         // 5. 초기화 리스너
         world.get('reset_logs_trigger').on(data => {
@@ -215,37 +183,99 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function broadcastAttempt() {
-        world.get('last_attempt').put({
-            user: myNickname,
+    function logActivity(user, type) {
+        world.get('activity_logs').set({
+            user: user,
+            type: type,
             time: Date.now()
         });
     }
 
-    function addHistoryItem(user, type) {
+    function updateChanceUI() {
+        const now = Date.now();
+        const timeDiff = now - lastCodingTime;
+        
+        if (timeDiff >= 24 * 60 * 60 * 1000) {
+            if (dailyChances < 3) {
+                dailyChances = 3;
+                world.get('users').get(myNickname).get('chances').put(3);
+            }
+        }
+
+        chanceCountSpan.textContent = dailyChances;
+        
+        if (dailyChances <= 0) {
+            const remaining = 24 * 60 * 60 * 1000 - timeDiff;
+            if (remaining > 0) {
+                const hours = Math.ceil(remaining / (1000 * 60 * 60));
+                codeButton.disabled = true;
+                codeButton.textContent = `${hours}시간 뒤 시킬 수 있어요!`;
+            } else {
+                codeButton.disabled = false;
+                codeButton.textContent = `시나모롤에게 코딩 시키기! ✨`;
+            }
+        } else {
+            codeButton.disabled = false;
+            codeButton.textContent = `시나모롤에게 코딩 시키기! ✨`;
+        }
+    }
+
+    function useChance() {
+        dailyChances--;
+        lastCodingTime = Date.now();
+        world.get('users').get(myNickname).put({
+            chances: dailyChances,
+            lastTime: lastCodingTime
+        });
+        updateChanceUI();
+    }
+
+    const renderedLogIds = new Set();
+
+    function addHistoryItem(user, type, time, id) {
+        if (renderedLogIds.has(id)) return;
+        renderedLogIds.add(id);
+
         const emptyMsg = attemptHistory.querySelector('.empty');
         if (emptyMsg) emptyMsg.remove();
 
         const div = document.createElement('div');
         div.className = 'history-item';
-        const time = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+        div.dataset.time = time;
+        const timeStr = new Date(time).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
         
         if (type === '접속') {
             div.style.background = '#f0fff4';
             div.style.borderColor = '#48bb78';
-            div.innerHTML = `<strong>[${time}]</strong> 🌟 <b>${user}</b>님이 마을에 입성했습니다!`;
+            div.innerHTML = `<strong>[${timeStr}]</strong> 🌟 <b>${user}</b>님이 마을에 입성했습니다!`;
+        } else if (type === '퇴장') {
+            div.style.background = '#fff5f5';
+            div.style.borderColor = '#feb2b2';
+            div.innerHTML = `<strong>[${timeStr}]</strong> 👋 <b>${user}</b>님이 마을을 떠났습니다.`;
         } else {
-            div.innerHTML = `<strong>[${time}]</strong> 💻 ${user}님이 코딩을 시도했습니다!`;
+            div.innerHTML = `<strong>[${timeStr}]</strong> 💻 <b>${user}</b>님이 코딩을 시도했습니다!`;
         }
         
-        attemptHistory.prepend(div);
-        if (attemptHistory.children.length > 30) {
-            attemptHistory.removeChild(attemptHistory.lastChild);
+        // 시간 순서대로 정렬하여 삽입 (이미 있는 것들 중 맞는 위치에)
+        const items = Array.from(attemptHistory.querySelectorAll('.history-item'));
+        const nextItem = items.find(item => parseInt(item.dataset.time) < time);
+        
+        if (nextItem) {
+            attemptHistory.insertBefore(div, nextItem);
+        } else {
+            attemptHistory.appendChild(div);
+        }
+
+        if (attemptHistory.children.length > 50) {
+            const last = attemptHistory.lastChild;
+            renderedLogIds.delete(last.dataset.id);
+            attemptHistory.removeChild(last);
         }
     }
 
     function clearHistoryUI() {
         attemptHistory.innerHTML = '<p class="history-item empty">데이터가 초기화되었습니다.</p>';
+        renderedLogIds.clear();
     }
 
     function getStatusIcons(char) {
@@ -327,7 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const currentImg = getStatusImage(char);
         const imgElement = card.querySelector('.character-avatar');
-        if (imgElement.src.indexOf(currentImg) === -1) imgElement.src = currentImg;
+        if (imgElement && imgElement.src.indexOf(currentImg) === -1) imgElement.src = currentImg;
 
         card.querySelector('.titles').textContent = getCharacterTitle(char);
         card.querySelector('.health-bar').style.width = `${char.health}%`;
@@ -440,7 +470,7 @@ document.addEventListener('DOMContentLoaded', () => {
         isProcessing = true;
         codeButton.disabled = true;
         useChance();
-        broadcastAttempt();
+        logActivity(myNickname, '시도');
 
         codeOutput.innerHTML = `<div class="code-line comment">// 시나모롤이 ${myNickname}님의 요청으로 코딩을 시작합니다...</div>`;
         

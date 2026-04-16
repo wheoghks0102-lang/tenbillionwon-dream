@@ -151,22 +151,25 @@ h2 {
     border: 1px solid #e2e8f0;
     display: flex;
     justify-content: center;
-    align-items: flex-end; /* 발을 맞추기 위해 하단 정렬 */
+    align-items: flex-end;
 }
 
 .character-avatar {
     transition: transform 0.3s ease, height 0.3s ease;
     object-fit: contain;
+    width: auto;
 }
 
-/* 키 고증을 위한 이미지 크기 조절 (더 미세하게 조정) */
-.height-rank-1 .character-avatar { height: 100%; width: auto; }
-.height-rank-2 .character-avatar { height: 98%; width: auto; }
-.height-rank-3 .character-avatar { height: 96%; width: auto; }
-.height-rank-4 .character-avatar { height: 94%; width: auto; }
-.height-rank-5 .character-avatar { height: 92%; width: auto; }
+/* 캐릭터별 정밀 크기 조절 */
+#char-1 .character-avatar { height: 115%; transform: scale(1.1); transform-origin: bottom; } /* 심우성: 아주 꽉 차게 */
+#char-4 .character-avatar { height: 100%; } /* 조대환: 꽉 차게 */
+#char-6 .character-avatar { height: 105%; } /* 전유희: 꽉 차게 (여성) */
+#char-2 .character-avatar { height: 103%; } /* 채의진: 꽉 차게 (여성) */
+#char-3 .character-avatar { height: 102%; } /* 조윤혜: 꽉 차게 (여성) */
+#char-5 .character-avatar { height: 88%; }  /* 최준: 살짝 널널하게 */
 
 .character-card:hover .character-avatar { transform: scale(1.05); }
+#char-1:hover .character-avatar { transform: scale(1.15); } /* 심우성 전용 호버 */
 
 .status-bar-container { width: 100%; margin-bottom: 8px; }
 .status-label-group { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; font-size: 0.75em; font-weight: 700; color: #718096; }

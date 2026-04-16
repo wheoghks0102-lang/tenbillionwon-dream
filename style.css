@@ -118,13 +118,58 @@ header::before { content: '☁️'; font-size: 2em; position: absolute; top: 10p
 #main-content {
     display: flex;
     flex-direction: row;
-    gap: 30px;
+    gap: 20px;
     align-items: flex-start;
 }
 
+#history-section {
+    flex: 0.6;
+    min-width: 200px;
+    background: white;
+    padding: 20px;
+    border-radius: 30px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    height: 600px;
+    display: flex;
+    flex-direction: column;
+    margin-top: 65px;
+    border: 3px solid #f0f8ff;
+}
+
+#history-section h3 {
+    color: #5d9cec;
+    font-size: 1.1em;
+    margin-top: 0;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+#attempt-history {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.history-item {
+    background: #f0f9ff;
+    border-radius: 12px;
+    padding: 10px;
+    margin-bottom: 10px;
+    font-size: 0.85em;
+    border-left: 4px solid #5d9cec;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.history-item.empty {
+    background: transparent;
+    border: none;
+    text-align: center;
+    color: #cbd5e0;
+}
+
 #cinnamon-section {
-    flex: 1;
-    min-width: 420px;
+    flex: 1.2;
+    min-width: 400px;
     margin-top: 65px;
     display: flex;
 }

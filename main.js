@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const characterGrid = document.getElementById('character-grid');
     const codeOutput = document.getElementById('code-output');
     const codeButton = document.getElementById('code-button');
+    const attemptHistory = document.getElementById('attempt-history');
 
     // Sounds
     const sounds = {
@@ -62,12 +63,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = JSON.parse(stored);
             const timeDiff = now - data.lastTime;
             
+            // 24시간이 지났으면 초기화
             if (timeDiff >= 24 * 60 * 60 * 1000) {
                 dailyChances = 3;
             } else {
                 dailyChances = data.count;
                 lastCodingTime = data.lastTime;
             }
+        } else {
+            dailyChances = 3;
         }
         updateChanceUI();
     }
@@ -77,14 +81,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (dailyChances <= 0) {
             const now = Date.now();
             const remaining = 24 * 60 * 60 * 1000 - (now - lastCodingTime);
-            const hours = Math.ceil(remaining / (1000 * 60 * 60));
-            codeButton.disabled = true;
-            codeButton.textContent = `${hours}시간 뒤 가능`;
+            if (remaining > 0) {
+                const hours = Math.ceil(remaining / (1000 * 60 * 60));
+                codeButton.disabled = true;
+                codeButton.textContent = `${hours}시간 뒤 시킬 수 있어요!`;
+            } else {
+                dailyChances = 3;
+                codeButton.disabled = false;
+                codeButton.textContent = `시나모롤에게 코딩 시키기! ✨`;
+                updateChanceUI();
+            }
+        } else {
+            codeButton.disabled = false;
+            codeButton.textContent = `시나모롤에게 코딩 시키기! ✨`;
         }
     }
 
     function useChance() {
         dailyChances--;
+        // 마지막 코딩 시간은 3번째 기회를 다 썼을 때가 아니라 각 시도마다 갱신 (유저 요청: 3번 다 쓰면 24시간 뒤)
+        // 여기서는 "3번 다 썼을 때의 시점"을 기준으로 24시간을 체크하는 로직으로 구현
         lastCodingTime = Date.now();
         localStorage.setItem(`coding_chances_${myNickname}`, JSON.stringify({
             count: dailyChances,
@@ -108,8 +124,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Listen for coding attempts from others
         world.get('last_attempt').on(data => {
-            if (data && data.user !== myNickname) {
-                broadcastMessage(`${data.user}님이 코딩을 시도했어요!`);
+            if (data && data.user) {
+                addHistoryItem(data.user);
             }
         });
     }
@@ -129,12 +145,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function broadcastMessage(msg) {
+    function addHistoryItem(user) {
+        const emptyMsg = attemptHistory.querySelector('.empty');
+        if (emptyMsg) emptyMsg.remove();
+
         const div = document.createElement('div');
-        div.className = 'code-line broadcast';
-        div.textContent = `📢 ${msg}`;
-        codeOutput.appendChild(div);
-        codeOutput.scrollTop = codeOutput.scrollHeight;
+        div.className = 'history-item';
+        const time = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+        div.innerHTML = `<strong>[${time}]</strong> ${user}님이 코딩을 시도했습니다!`;
+        
+        attemptHistory.prepend(div);
+        
+        // 너무 많으면 삭제
+        if (attemptHistory.children.length > 20) {
+            attemptHistory.removeChild(attemptHistory.lastChild);
+        }
     }
 
     function getStatusIcons(char) {
@@ -149,12 +174,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getCharacterTitle(char) {
         let titles = [];
-        if (char.money <= 5000) titles.push('그지');
-        else if (char.money >= 30000) titles.push('부자');
-        if (char.satiety <= 30) titles.push('굶주린');
-        else if (char.satiety >= 70) titles.push('배부른');
-        if (char.health <= 30) titles.push('지친');
-        else if (char.health >= 70) titles.push('쌩쌩한');
+        if (char.money <= 5000) titles.push('<그지>');
+        else if (char.money >= 30000) titles.push('<부자>');
+        if (char.satiety <= 30) titles.push('<굶주린>');
+        else if (char.satiety >= 70) titles.push('<배부른>');
+        if (char.health <= 30) titles.push('<지친>');
+        else if (char.health >= 70) titles.push('<쌩쌩한>');
         return titles.length > 0 ? titles.join(' ') + ' ' : '';
     }
 
@@ -328,7 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
         useChance();
         broadcastAttempt();
 
-        codeOutput.innerHTML = `<div class="code-line comment">// ${myNickname}님이 온라인 코딩 시작...</div>`;
+        codeOutput.innerHTML = `<div class="code-line comment">// 시나모롤이 ${myNickname}님의 요청으로 코딩을 시작합니다...</div>`;
         
         const resultCount = Math.floor(Math.random() * 2) + 3;
         const availableEvents = [...events];
@@ -360,7 +385,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 codeOutput.scrollTop = codeOutput.scrollHeight;
             }
-            broadcastMessage(`${myNickname}님의 코딩으로 세계가 변화했습니다!`);
+            // 최종 리액션 추가
+            const endDiv = document.createElement('div');
+            endDiv.className = 'code-line cinnamoroll-reaction';
+            endDiv.textContent = `시나모롤: "코딩 끝! 모두에게 좋은 일이 생겼길 바라요! (´,,•ω•,,)♡"`;
+            codeOutput.appendChild(endDiv);
+            codeOutput.scrollTop = codeOutput.scrollHeight;
+            
         } catch (error) {
             console.error(error);
         } finally {

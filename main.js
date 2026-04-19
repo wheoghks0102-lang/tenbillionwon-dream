@@ -1,9 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Online Cinnamoroll Game Initializing...');
 
-    // Gun.js Initialization - Version v2
-    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const world = gun.get('cinnamoroll-world-v2');
+    // Gun.js Initialization - Version v3 (Unified Global State)
+    const gun = Gun([
+        'https://gun-manhattan.herokuapp.com/gun',
+        'https://gun-ams1.herokuapp.com/gun',
+        'https://gun-sjc1.herokuapp.com/gun'
+    ]);
+    const world = gun.get('cinnamoroll-world-v3');
 
     const INITIAL_CHARACTERS = [
         { id: 1, name: '심우성', prefix: 'sim', img: 'sim.png', health: 50, satiety: 50, money: 10000 },
@@ -43,7 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateOnlineUsersUI() {
         const now = Date.now();
         const onlineNicknames = Object.keys(activeUsers).filter(nick => {
-            // 1분 이내에 활동이 있었던 유저만 온라인으로 간주
             return (now - activeUsers[nick]) < 60000;
         });
         
@@ -66,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
         titleClickCount++;
         if (titleClickCount === 15) {
             titleClickCount = 0;
-            if (confirm('모든 캐릭터의 상태와 활동 로그를 초기화할까요? (전체 유저 공유)')) {
+            if (confirm('모든 마을 데이터(캐릭터, 로그, 기회)를 초기화할까요?')) {
                 resetAllSharedStates();
             }
         }
@@ -80,12 +83,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 money: char.money
             });
         });
-        // 로그 초기화는 데이터 구조상 복잡하므로 트리거만 보냄
+        
+        // 기회 초기화
+        world.get('village_status').put({
+            chances: 3,
+            lastTime: 0
+        });
+
+        // 로그 초기화 트리거
         world.get('reset_logs_trigger').put({
             time: Date.now(),
             by: myNickname
         });
-        broadcastMessage(`시스템: 모든 데이터가 초기화되었습니다! ✨`);
+        
+        broadcastMessage(`시스템: 마을의 모든 데이터가 초기화되었습니다! ✨`);
     }
 
     // Login Logic
@@ -99,40 +110,30 @@ document.addEventListener('DOMContentLoaded', () => {
             
             initSharedState();
             
-            // 접속 로그 기록
             logActivity(myNickname, '접속');
             
             heartbeat();
-            setInterval(heartbeat, 30000); // 30초마다 하트비트
+            setInterval(heartbeat, 30000);
         } else {
             alert('닉네임을 입력해주세요!');
         }
     });
 
-    // Logout Logic
-    window.addEventListener('beforeunload', () => {
-        if (myNickname) {
-            logActivity(myNickname, '퇴장');
-            // Presence 즉시 업데이트 (선택 사항)
-            world.get('presence').get(myNickname).put(0);
-        }
-    });
-
     // Shared State Logic
     function initSharedState() {
-        // 1. 캐릭터 상태 동기화
+        // 1. 캐릭터 상태 동기화 (전체 공유)
         characters.forEach(char => {
             world.get(`char_${char.id}`).on(data => {
                 if (data) {
-                    char.health = data.health ?? char.health;
-                    char.satiety = data.satiety ?? char.satiety;
-                    char.money = data.money ?? char.money;
+                    char.health = typeof data.health === 'number' ? data.health : char.health;
+                    char.satiety = typeof data.satiety === 'number' ? data.satiety : char.satiety;
+                    char.money = typeof data.money === 'number' ? data.money : char.money;
                     updateCharacterUI(char);
                 }
             });
         });
 
-        // 2. 활동 로그 동기화 (과거 이력 포함)
+        // 2. 활동 로그 동기화
         world.get('activity_logs').map().on((data, id) => {
             if (data && data.user && data.type) {
                 addHistoryItem(data.user, data.type, data.time, id);
@@ -150,16 +151,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateOnlineUsersUI();
             }
         });
-        setInterval(updateOnlineUsersUI, 10000);
 
-        // 4. 기회(Chances) 동기화
-        world.get('users').get(myNickname).on(data => {
+        // 4. 마을 전체 기회(Chances) 동기화 - 닉네임 상관없이 공유
+        world.get('village_status').on(data => {
             if (data) {
                 dailyChances = data.chances ?? 3;
                 lastCodingTime = data.lastTime ?? 0;
             } else {
-                // 데이터가 없으면 초기화
-                world.get('users').get(myNickname).put({
+                world.get('village_status').put({
                     chances: 3,
                     lastTime: 0
                 });
@@ -167,7 +166,14 @@ document.addEventListener('DOMContentLoaded', () => {
             updateChanceUI();
         });
 
-        // 5. 초기화 리스너
+        // 5. 실시간 코딩 로그 동기화 (code-output 공유)
+        world.get('coding_broadcast').on(data => {
+            if (data && data.time > (Date.now() - 10000)) { // 최근 10초 이내의 메시지만 표시
+                displayBroadcastMessage(data.msg, data.type);
+            }
+        });
+
+        // 6. 초기화 리스너
         world.get('reset_logs_trigger').on(data => {
             if (data) {
                 clearHistoryUI();
@@ -191,29 +197,55 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function broadcastCodingStep(msg, type = 'comment') {
+        world.get('coding_broadcast').put({
+            msg: msg,
+            type: type,
+            time: Date.now(),
+            by: myNickname
+        });
+    }
+
+    function displayBroadcastMessage(msg, type) {
+        // 중복 메시지 방지 (간단한 체크)
+        const lastLine = codeOutput.lastElementChild;
+        if (lastLine && lastLine.textContent === (type === 'code' ? `> ${msg}` : `// ${msg}`)) return;
+
+        const div = document.createElement('div');
+        div.className = `code-line ${type === 'code' ? 'system' : 'comment'}`;
+        if (type === 'code') {
+            div.textContent = `> ${msg}`;
+            div.style.color = '#3182ce';
+        } else if (type === 'reaction') {
+            div.className = 'code-line cinnamoroll-reaction';
+            div.textContent = msg;
+        } else {
+            div.textContent = `// ${msg}`;
+        }
+        
+        codeOutput.appendChild(div);
+        codeOutput.scrollTop = codeOutput.scrollHeight;
+    }
+
     function updateChanceUI() {
         const now = Date.now();
-        const timeDiff = now - lastCodingTime;
+        const lastDate = new Date(lastCodingTime).toDateString();
+        const nowDate = new Date(now).toDateString();
         
-        if (timeDiff >= 24 * 60 * 60 * 1000) {
-            if (dailyChances < 3) {
-                dailyChances = 3;
-                world.get('users').get(myNickname).get('chances').put(3);
-            }
+        // 날짜가 바뀌었으면 기회 초기화 (마을 전체 공유)
+        if (lastDate !== nowDate && lastCodingTime > 0) {
+            dailyChances = 3;
+            world.get('village_status').put({
+                chances: 3,
+                lastTime: now
+            });
         }
 
         chanceCountSpan.textContent = dailyChances;
         
         if (dailyChances <= 0) {
-            const remaining = 24 * 60 * 60 * 1000 - timeDiff;
-            if (remaining > 0) {
-                const hours = Math.ceil(remaining / (1000 * 60 * 60));
-                codeButton.disabled = true;
-                codeButton.textContent = `${hours}시간 뒤 시킬 수 있어요!`;
-            } else {
-                codeButton.disabled = false;
-                codeButton.textContent = `시나모롤에게 코딩 시키기! ✨`;
-            }
+            codeButton.disabled = true;
+            codeButton.textContent = `오늘 기회를 모두 사용했어요! 😴`;
         } else {
             codeButton.disabled = false;
             codeButton.textContent = `시나모롤에게 코딩 시키기! ✨`;
@@ -223,11 +255,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function useChance() {
         dailyChances--;
         lastCodingTime = Date.now();
-        world.get('users').get(myNickname).put({
+        world.get('village_status').put({
             chances: dailyChances,
             lastTime: lastCodingTime
         });
-        updateChanceUI();
     }
 
     const renderedLogIds = new Set();
@@ -472,7 +503,9 @@ document.addEventListener('DOMContentLoaded', () => {
         useChance();
         logActivity(myNickname, '시도');
 
-        codeOutput.innerHTML = `<div class="code-line comment">// 시나모롤이 ${myNickname}님의 요청으로 코딩을 시작합니다...</div>`;
+        const startMsg = `시나모롤이 ${myNickname}님의 요청으로 코딩을 시작합니다...`;
+        codeOutput.innerHTML = `<div class="code-line comment">// ${startMsg}</div>`;
+        broadcastCodingStep(startMsg, 'comment');
         
         const resultCount = Math.floor(Math.random() * 2) + 3;
         const availableEvents = [...events];
@@ -489,11 +522,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const others2 = others.filter(c => c.id !== c2.id);
                 const c3 = others2[Math.floor(Math.random() * others2.length)];
 
+                const codeText = event.code(c1, c2, c3);
                 const codeDiv = document.createElement('div');
                 codeDiv.className = `code-line ${event.type}`;
-                codeDiv.textContent = `> ${event.code(c1, c2, c3)}`;
+                codeDiv.textContent = `> ${codeText}`;
                 codeOutput.appendChild(codeDiv);
                 codeOutput.scrollTop = codeOutput.scrollHeight;
+                broadcastCodingStep(codeText, 'code');
 
                 await new Promise(r => setTimeout(r, 1000));
                 const summary = event.action(c1, c2, c3);
@@ -501,14 +536,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 summaryDiv.className = 'code-line comment';
                 summaryDiv.textContent = `// ${summary}`;
                 codeOutput.appendChild(summaryDiv);
-
                 codeOutput.scrollTop = codeOutput.scrollHeight;
+                broadcastCodingStep(summary, 'comment');
             }
+            
+            const endMsg = `시나모롤: "코딩 끝! 모두에게 좋은 일이 생겼길 바라요! (´,,•ω•,,)♡"`;
             const endDiv = document.createElement('div');
             endDiv.className = 'code-line cinnamoroll-reaction';
-            endDiv.textContent = `시나모롤: "코딩 끝! 모두에게 좋은 일이 생겼길 바라요! (´,,•ω•,,)♡"`;
+            endDiv.textContent = endMsg;
             codeOutput.appendChild(endDiv);
             codeOutput.scrollTop = codeOutput.scrollHeight;
+            broadcastCodingStep(endMsg, 'reaction');
             
         } catch (error) {
             console.error(error);

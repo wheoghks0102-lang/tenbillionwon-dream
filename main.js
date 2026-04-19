@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
         titleClickCount++;
         if (titleClickCount === 15) {
             titleClickCount = 0;
-            if (confirm('모든 마을 데이터(캐릭터, 로그, 기회)를 초기화할까요?')) {
+            if (confirm('모든 마을 데이터(캐릭터, 로그, 전역 기회)를 초기화할까요?')) {
                 resetAllSharedStates();
             }
         }
@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
         
-        // 기회 초기화
+        // 전역 기회 데이터 초기화 (필요 시)
         world.get('village_status').put({
             chances: 3,
             lastTime: 0
@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
             by: myNickname
         });
         
-        broadcastMessage(`시스템: 마을의 모든 데이터가 초기화되었습니다! ✨`);
+        broadcastMessage(`시스템: 마을의 공유 데이터가 초기화되었습니다! ✨`);
     }
 
     // Login Logic
@@ -152,13 +152,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 4. 마을 전체 기회(Chances) 동기화 - 닉네임 상관없이 공유
-        world.get('village_status').on(data => {
+        // 4. 개별 사용자 기회(Chances) 동기화 - 각자 하루 3번
+        world.get('users').get(myNickname).on(data => {
             if (data) {
                 dailyChances = data.chances ?? 3;
                 lastCodingTime = data.lastTime ?? 0;
             } else {
-                world.get('village_status').put({
+                // 데이터가 없으면 초기화
+                world.get('users').get(myNickname).put({
                     chances: 3,
                     lastTime: 0
                 });
@@ -207,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function displayBroadcastMessage(msg, type) {
-        // 중복 메시지 방지 (간단한 체크)
+        // 중복 메시지 방지
         const lastLine = codeOutput.lastElementChild;
         if (lastLine && lastLine.textContent === (type === 'code' ? `> ${msg}` : `// ${msg}`)) return;
 
@@ -232,10 +233,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const lastDate = new Date(lastCodingTime).toDateString();
         const nowDate = new Date(now).toDateString();
         
-        // 날짜가 바뀌었으면 기회 초기화 (마을 전체 공유)
+        // 날짜가 바뀌었으면 기회 초기화 (개별 사용자 기준)
         if (lastDate !== nowDate && lastCodingTime > 0) {
             dailyChances = 3;
-            world.get('village_status').put({
+            world.get('users').get(myNickname).put({
                 chances: 3,
                 lastTime: now
             });
@@ -255,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function useChance() {
         dailyChances--;
         lastCodingTime = Date.now();
-        world.get('village_status').put({
+        world.get('users').get(myNickname).put({
             chances: dailyChances,
             lastTime: lastCodingTime
         });
@@ -287,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
             div.innerHTML = `<strong>[${timeStr}]</strong> 💻 <b>${user}</b>님이 코딩을 시도했습니다!`;
         }
         
-        // 시간 순서대로 정렬하여 삽입 (이미 있는 것들 중 맞는 위치에)
+        // 시간 순서대로 정렬하여 삽입
         const items = Array.from(attemptHistory.querySelectorAll('.history-item'));
         const nextItem = items.find(item => parseInt(item.dataset.time) < time);
         

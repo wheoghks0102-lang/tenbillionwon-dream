@@ -88,6 +88,98 @@ body {
     background-color: #4a89dc;
 }
 
+/* 튜토리얼 오버레이 */
+#tutorial-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+#tutorial-box {
+    background: white;
+    padding: 40px;
+    border-radius: 40px;
+    box-shadow: 0 20px 60px rgba(93, 156, 236, 0.3);
+    border: 8px solid #f0f9ff;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+    animation: fadeIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.tutorial-header {
+    margin-bottom: 25px;
+}
+
+.tutorial-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 5px solid #e3f2fd;
+    object-fit: cover;
+    margin-bottom: 15px;
+}
+
+#tutorial-box h2 {
+    color: #5d9cec;
+    font-size: 1.5em;
+    margin: 0;
+    background: none;
+    box-shadow: none;
+}
+
+.tutorial-content {
+    text-align: left;
+    color: #4a5568;
+    line-height: 1.8;
+}
+
+.tutorial-list {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+}
+
+.tutorial-list li {
+    margin-bottom: 12px;
+    padding-left: 25px;
+    position: relative;
+}
+
+.tutorial-list li::before {
+    content: '🐾';
+    position: absolute;
+    left: 0;
+    font-size: 0.9em;
+}
+
+#tutorial-close-button {
+    margin-top: 20px;
+    background-color: #ffc0cb;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 12px 30px;
+    font-size: 1.1em;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 10px rgba(255, 192, 203, 0.4);
+}
+
+#tutorial-close-button:hover {
+    transform: scale(1.05);
+    background-color: #ffafbd;
+}
+
 #app-container {
     width: 100%;
     max-width: 1400px;

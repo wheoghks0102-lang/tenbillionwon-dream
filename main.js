@@ -31,6 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginOverlay = document.getElementById('login-overlay');
     const nicknameInput = document.getElementById('nickname-input');
     const loginButton = document.getElementById('login-button');
+    const tutorialOverlay = document.getElementById('tutorial-overlay');
+    const tutorialCloseButton = document.getElementById('tutorial-close-button');
     const appContainer = document.getElementById('app-container');
     const myNicknameSpan = document.getElementById('my-nickname');
     const chanceCountSpan = document.getElementById('chance-count');
@@ -105,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (nick) {
             myNickname = nick;
             loginOverlay.style.display = 'none';
-            appContainer.style.display = 'block';
+            tutorialOverlay.style.display = 'flex'; // Show tutorial first
             myNicknameSpan.textContent = myNickname;
             
             initSharedState();
@@ -117,6 +119,12 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             alert('닉네임을 입력해주세요!');
         }
+    });
+
+    // Tutorial Close Logic
+    tutorialCloseButton.addEventListener('click', () => {
+        tutorialOverlay.style.display = 'none';
+        appContainer.style.display = 'block';
     });
 
     // Shared State Logic
